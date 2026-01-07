@@ -18,10 +18,9 @@ class Direction2d implements IPoint2d {
   private constructor(
     public readonly x: number,
     public readonly y: number,
-    // public readonly _opposite?: Direction2d,
   ) {}
 
-  public get opposite() { return Direction2d.fromParameters(Point2d.scale(this, -1)); }
+  public get opposite() { return Direction2d.fromParameters(Point2d.scale(this, -1))!; }
 
   public static fromCardinalDisplacement(p1: IPoint2d, p2: IPoint2d) {
     const matchingAxis = Point2d.fromIPoint2d(p1).matchingAxes(p2);
@@ -32,7 +31,7 @@ class Direction2d implements IPoint2d {
 
   public static fromParameters({ x, y }: IPoint2d): Direction2d | undefined {
     if (x === 0) {
-      return y > 0 ? this.down : this.up;
+      return y > 0 ? this.down : (y !== 0 ? this.up : undefined);
     } else if (y === 0) {
       return x > 0 ? this.right : this.left;
     } else {
@@ -280,7 +279,7 @@ class Rect2d implements IRect2d, IExtents2d, IBounds2d {
     return false;
   }
 
-  public wrap(p: IPoint2d) {
+  public wrap<P extends IPoint2d>(p: P) {
     while (p.x > this.xMax) p.x -= this.width;
     while (p.x < this.xMin) p.x += this.width;
     while (p.y > this.yMax) p.y -= this.height;
