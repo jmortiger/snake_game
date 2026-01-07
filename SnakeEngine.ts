@@ -4,28 +4,6 @@ import { Direction, Point, Rect } from "./Point2d";
 import Snake from "./Snake";
 import { type EngineConfig, WallBehavior, type IEngineConfig } from "./Types";
 
-class Runner {
-  private requestId?: number;
-  private initialTime?: number;
-  private priorTime?: number;
-  private timeSinceLastUpdate?: number;
-
-  constructor(private engine: SnakeEngine, public onUpdate?: () => void, public onInit?: () => void, public onStop?: () => void) {}
-
-  init() {
-    if (this.onInit) {
-      this.onInit();
-      return;
-    }
-    this.engine.initGame();
-    // this.requestId = requestAnimationFrame(this.onUpdate || (e => this.update));
-    setInterval(this.onUpdate || (() => this.update()), this.engine.config.millisecondsPerUpdate);
-  }
-
-  update() {
-    this.engine.advance();
-  }
-}
 class SnakeEngine {
   static readonly defaultConfig: EngineConfig = {
     startingDirection: Direction.up,
@@ -96,6 +74,20 @@ class SnakeEngine {
 
     // requestAnimationFrame(this.update);
   }
+
+  // #region Tick Management
+  private timerId?: number;
+  startGame() {
+    if (this.timerId) return;
+    this.timerId = window.setInterval(() => this.update(), this.config.millisecondsPerUpdate);
+  }
+
+  pauseGame() {
+    if (!this.timerId) return;
+    window.clearInterval(this.timerId);
+    this.timerId = undefined;
+  }
+  // #endregion Tick Management
 
   public update() {
     // 1. Inputs

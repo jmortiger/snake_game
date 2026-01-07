@@ -17,12 +17,14 @@ class Snake {
   }
 
   public static fromPreferences(engine: SnakeEngine, playfield: Rect) {
-    const direction = Point2d.fromIPoint2d(engine.config.startingDirection.opposite);
-    if (!playfield.intersects(direction)) {
-      throw new Error("`Snake.fromPreferences` is unfinished");
-      // return
-    }
-    const nodes = [playfield.wrap(new Point(0, 0)), ]
+    // const direction = Point2d.fromIPoint2d(engine.config.startingDirection.opposite);
+    // throw new Error("`Snake.fromPreferences` is unfinished");
+    console.warn("`Snake.fromPreferences` is unfinished");
+    // if (!playfield.intersects(direction)) {
+    //   // return
+    // }
+    // const nodes = [playfield.wrap(new Point(0, 0))]
+    const nodes = [new Point(engine.config.startingLength!, 0), new Point(0, 0)];
 
     return new Snake(engine, nodes);
   }
