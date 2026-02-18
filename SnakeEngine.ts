@@ -5,6 +5,7 @@ import Snake from "./Snake";
 import { type EngineConfig, WallBehavior, type IEngineConfig } from "./Types";
 
 class SnakeEngine {
+  public static DEBUG_MODE = true;
   static readonly defaultConfig: EngineConfig = {
     startingDirection: Direction.up,
     startingLength: 5,
@@ -30,22 +31,31 @@ class SnakeEngine {
   public get isGameOver(): boolean { return this._isGameOver; }
   // #endregion Game State
 
+  private obstacles: Point[] = [];
   private pellets: Point[] = [];
-  private getValidPelletLocations() {
+  public getValidSpawnLocations() {
     const ret: Point[] = [];
-    const lineSegments = this.snake.segments;
+    const lineSegments = this.snake?.segments;
     for (let x = this.playfieldRect.xMin; x <= this.playfieldRect.xMax; x++) {
       for (let y = this.playfieldRect.yMin; y <= this.playfieldRect.yMax; y++) {
         const p = new Point(x, y);
-        if (!this.pellets.includes(p) && !lineSegments.find(e => p.intersects(e[0]!, e[1]!)))
+        if (!this.pellets.includes(p)
+          && !this.obstacles.includes(p)
+          && (!lineSegments || !lineSegments.find(e => p.intersects(e[0]!, e[1]!))))
           ret.push(p);
       }
     }
     return ret;
   }
 
+  public getRandomValidSpawnLocation() {
+    const t = this.getValidSpawnLocations();
+    return t[Math.floor(Math.random() * t.length)];
+  }
+
   public readonly playfieldRect: Rect;
-  public currentDirection!: Direction;
+  // public currentDirection!: Direction;
+  public get currentDirection(): Direction { return this.snake.headDirection; }
   public snake: Snake;
 
   constructor(
@@ -55,7 +65,6 @@ class SnakeEngine {
   ) {
     this.playfieldRect = Rect.fromDimensionsAndMin(width, height);
     this.snake = Snake.fromPreferences(this, this.playfieldRect);
-    // TODO: Start with 2 points in _turn for head & tail
     this._isGameOver = false;
 
     this.initGame();
@@ -64,7 +73,7 @@ class SnakeEngine {
   public initGame() {
     /* this._snakeNodes.push(new Point(0, 0));
     this._snakeNodes.push(new Point(this._snakeLength, 0)); */
-    const t = this.getValidPelletLocations();
+    const t = this.getValidSpawnLocations();
     const max = Math.min(t.length, this.config.startingPellets);
     for (let i = 0; i < max; i++) {
       const index = Math.round(Math.random() * t.length);
@@ -79,13 +88,26 @@ class SnakeEngine {
   private timerId?: number;
   startGame() {
     if (this.timerId) return;
-    this.timerId = window.setInterval(() => this.update(), this.config.millisecondsPerUpdate);
+    if (SnakeEngine.DEBUG_MODE)
+      document.onkeyup = (e) => this.playOnSpacebar(e);
+    else
+      this.timerId = window.setInterval(() => this.update(), this.config.millisecondsPerUpdate);
+    this.onGameOver.add((e) => this.endGame());
+  }
+
+  playOnSpacebar(e: KeyboardEvent) {
+    if (e.key === " ") this.update();
   }
 
   pauseGame() {
     if (!this.timerId) return;
     window.clearInterval(this.timerId);
     this.timerId = undefined;
+  }
+
+  endGame() {
+    window.clearInterval(this.timerId);
+    alert("Game over");
   }
   // #endregion Tick Management
 
@@ -95,20 +117,24 @@ class SnakeEngine {
     const d = keys.map(e => e.direction).includes(this.snake.lastDirection) ? this.snake.lastDirection : (keys[0]?.direction || this.snake.lastDirection);
     // 2. Update
     this.advance(d);
+    // 3. Fire event
+    this.onTickCompleted.fire({ engine: this });
   }
 
   private generatePellet() {
-    const t = this.getValidPelletLocations();
+    const t = this.getValidSpawnLocations();
     const index = Math.round(Math.random() * t.length);
     this.pellets.push(t[index]!);
   }
 
   /**
    *
+   * @todo Ignore 180 degree turns
    * @param d The direction the snake is moving in.
    * @returns The line segment of collision if the snake collided with itself, `undefined` if it stayed alive.
    */
   public advance(d = this.currentDirection) {
+    // debugger;
     const projectedPosition = Point.add(this.snake.head, d);
     // Which pellet was eaten, if any.
     const eatenIndex = this.pellets.findIndex(e => e === projectedPosition);

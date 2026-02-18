@@ -41,6 +41,8 @@ export default defineConfig([
           typeof: false,
         },
       }],
+      "@stylistic/indent": ["warn", 2, { VariableDeclarator: "first" }],
+      "@stylistic/space-before-function-paren": ["warn", "never"],
     },
   },
   {
@@ -107,6 +109,7 @@ export default defineConfig([
   {
     rules: {
       "no-unused-vars": "off",
+      "no-debugger": "warn",
     },
   },
   {

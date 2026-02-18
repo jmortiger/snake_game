@@ -15,6 +15,7 @@ class Direction2d implements IPoint2d {
   public static readonly down = new Direction2d(0, 1);
   public static readonly left = new Direction2d(-1, 0);
   public static readonly right = new Direction2d(1, 0);
+  public static readonly directions = Object.freeze([this.up, this.down, this.left, this.right]);
   private constructor(
     public readonly x: number,
     public readonly y: number,
@@ -85,6 +86,14 @@ class Point2d implements IPoint2d {
     return this;
   }
 
+  public static equals(p1: IPoint2d, p2: IPoint2d): boolean {
+    return p1.x == p2.x && p1.y == p2.y;
+  }
+
+  public equals({ x = 0, y = 0 }: IPoint2d) {
+    return this.x == x && this.y == y;
+  }
+
   public static scale(p: IPoint2d, v: number): Point2d {
     return new Point2d(
       p.x * v,
@@ -139,34 +148,34 @@ class Point2d implements IPoint2d {
   public intersects(p1: IPoint2d, p2: IPoint2d): boolean {
     const m1 = this.matchingAxes(p1);
     switch (m1.length) {
-      case 0:
-        return false;
-      case 2:
-        return true;
-      case 1:
-        break;
-      default:
-        throw new Error(`Invalid value from Point2d.matchingAxes(${p1}) (${m1})`);
+    case 0:
+      return false;
+    case 2:
+      return true;
+    case 1:
+      break;
+    default:
+      throw new Error(`Invalid value from Point2d.matchingAxes(${p1}) (${m1})`);
     }
     const m2 = this.matchingAxes(p2);
     switch (m2.length) {
-      case 0:
-        return false;
-      case 2:
-        return true;
-      case 1:
-        break;
-      default:
-        throw new Error(`Invalid value from Point2d.matchingAxes(${p2}) (${m2})`);
+    case 0:
+      return false;
+    case 2:
+      return true;
+    case 1:
+      break;
+    default:
+      throw new Error(`Invalid value from Point2d.matchingAxes(${p2}) (${m2})`);
     }
     const a = m1.filter(e => m2.includes(e));
     switch (a.length) {
-      case 0:
-        return false;
-      case 1:
-        break;
-      default:
-        throw new Error(`Invalid value from Point2d.intersects(${p2}) (${a})`);
+    case 0:
+      return false;
+    case 1:
+      break;
+    default:
+      throw new Error(`Invalid value from Point2d.intersects(${p2}) (${a})`);
     }
     // If this is aligned on the y axis, it must be between or on the extremes on the x, & vice versa.
     if (a[0]! === Axis2d.y) {
@@ -338,6 +347,13 @@ class RectInt2d implements IRect2d, IExtents2d, IBounds2d {
   public get bottomEdge(): Point2d[] { return [new Point2d(this.xMin, this.yMax), new Point2d(this.xMax, this.yMax)]; }
 
   public get edges() { return [this.leftEdge, this.rightEdge, this.topEdge, this.bottomEdge]; }
+
+  public get leftBorderEdge(): Point2d[] { return [new Point2d(this.xMin - 1, this.yMin - 1), new Point2d(this.xMin - 1, this.yMax + 1)]; }
+  public get rightBorderEdge(): Point2d[] { return [new Point2d(this.xMax + 1, this.yMin - 1), new Point2d(this.xMax + 1, this.yMin - 1)]; }
+  public get topBorderEdge(): Point2d[] { return [new Point2d(this.xMin - 1, this.yMin - 1), new Point2d(this.xMax + 1, this.yMin - 1)]; }
+  public get bottomBorderEdge(): Point2d[] { return [new Point2d(this.xMin - 1, this.yMax + 1), new Point2d(this.xMax + 1, this.yMax + 1)]; }
+
+  public get borderEdges() { return [this.leftBorderEdge, this.rightBorderEdge, this.topBorderEdge, this.bottomBorderEdge]; }
   // #endregion Properties
 
   // #region Constructors
@@ -383,12 +399,28 @@ class RectInt2d implements IRect2d, IExtents2d, IBounds2d {
   }
   // #endregion Constructors
 
+  // public intersects(p: IPoint2d) {
+  //   return (this.xMin <= p.x && this.xMax >= p.x && this.yMin <= p.y && this.yMax >= p.y);
+  // }
   public intersects(p: IPoint2d) {
-    return (this.xMin <= p.x && this.xMax >= p.x && this.yMin <= p.y && this.yMax >= p.y);
+    return this.xMin <= p.x && this.xMax >= p.x && this.yMin <= p.y && this.yMax >= p.y;
   }
 
+  /**
+   * Finds the point on the perimeter where the point intersects.
+   */
   public findIntersection(p: Point2d) {
     for (const edge of this.edges) {
+      if (p.intersects(edge[0]!, edge[1]!)) return edge;
+    }
+    return false;
+  }
+
+  /**
+   * Finds the point on the line segments bordering the perimeter where the point intersects.
+   */
+  public findBorderIntersection(p: Point2d) {
+    for (const edge of this.borderEdges) {
       if (p.intersects(edge[0]!, edge[1]!)) return edge;
     }
     return false;
