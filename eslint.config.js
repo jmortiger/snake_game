@@ -101,6 +101,7 @@ export default defineConfig([
     rules: {
       "no-unused-vars": "off",
       "no-debugger":    "warn",
+      "prefer-const":   "warn",
     },
   },
   {
@@ -109,6 +110,7 @@ export default defineConfig([
         vars:                    "all",
         args:                    "after-used",
         caughtErrors:            "all",
+        argsIgnorePattern:       "^_",
         ignoreRestSiblings:      false,
         ignoreUsingDeclarations: false,
         reportUsedIgnorePattern: false,

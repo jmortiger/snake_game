@@ -1,6 +1,7 @@
 import { describe, expect, test } from "bun:test";
 import Snake from "./Snake";
-import { DebugLevel, WallBehavior } from "./Types";
+import { WallBehavior } from "./Types";
+import { DebugLevel } from "./DebugLevel";
 import { Direction, Point2d, RectInt, type IPoint2d } from "./Point2d";
 
 function iterate(

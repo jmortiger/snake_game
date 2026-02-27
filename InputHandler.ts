@@ -33,7 +33,7 @@ type _KeyBindings = {
   right:       string[];
 };
 class InputHandler implements IInputHandler {
-  currentStateOnly = true;
+  currentStateOnly = false;
   // constructor() { this.toggleDefaultInputSystem();this.toggleDefaultInputSystem(); }
   constructor() { this.initDefaultInputs(); }
   isKeyDown(action: InputAction): boolean {
@@ -82,6 +82,7 @@ class InputHandler implements IInputHandler {
     left:  false,
     right: false,
   };
+
   protected get keyState() { return this._keyState; }
 
   protected onKeyShell(e: KeyboardEvent, value: boolean) {
@@ -212,7 +213,7 @@ class InputHandler implements IInputHandler {
 } */
 
 class DebugInputHandler extends InputHandler {
-  constructor(public level: DebugLevel = DebugLevel.LOG) { super(); }
+  constructor(public level: DebugLevel = DebugLevel.DEBUG) { super(); }
   override toggleDefaultInputSystem(): void {
     this.level.print(DebugLevel.INFO, "Toggling default input system %o", this.useDefaultInputSystem ? "off" : "on");
     super.toggleDefaultInputSystem();

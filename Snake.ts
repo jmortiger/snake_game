@@ -1,4 +1,4 @@
-import { Point, RectInt as Rect, Direction, Axis, type IPoint } from "./Point2d";
+import { Point, RectInt, Direction, Axis, type IPoint } from "./Point2d";
 import { randomIndex, WallBehavior, type ISnakeConfig } from "./Types";
 import { DEBUG, DebugLevel, ERROR, INFO, LOG, WARN } from "./DebugLevel";
 
@@ -11,8 +11,8 @@ class Snake {
   public get snakeLength(): number { return this._snakeLength; }
 
   // #region Initialization
-  private constructor(private readonly config: ISnakeConfig, startingNodes: Point[], private readonly playfield: Rect) {
-    this._lastDirection = Direction.fromCardinalDisplacement(startingNodes[0]!, startingNodes[1]!)!; // this._lastDirection = this.config.startingDirection;
+  private constructor(private readonly config: ISnakeConfig, startingNodes: Point[], private readonly playfield: RectInt) {
+    this._lastDirection = Direction.fromCardinalDisplacement(startingNodes[1]!, startingNodes[0]!)!; // this._lastDirection = this.config.startingDirection;
     this._snakeLength = this.config.startingLength!;
     this._snakeNodes = startingNodes.slice();
   }
@@ -22,11 +22,11 @@ class Snake {
   // }
 
   private static readonly ALLOW_STARTING_NODES_ON_PERIMETER = true;
-  private static isOnPerimeter(e: IPoint, playfield: Rect) {
+  private static isOnPerimeter(e: IPoint, playfield: RectInt) {
     return e.x > playfield.xMin && e.x < playfield.xMax - 1 && e.y > playfield.yMin && e.y < playfield.yMax - 1;
   }
 
-  private static getInitialValidNodes(playfield: Rect, claimedNodes?: IPoint[]) {
+  private static getInitialValidNodes(playfield: RectInt, claimedNodes?: IPoint[]) {
     if (this.ALLOW_STARTING_NODES_ON_PERIMETER) {
       if (claimedNodes) {
         return playfield.generatePointsWhere(e => !Point.included(e, claimedNodes));
@@ -64,7 +64,7 @@ class Snake {
   private static depthFirst_iterations = 0;
   private static depthFirst_maxLength = 0;
   private static depthFirst_longest:  Readonly<Point[]> = [];
-  public static depthFirst_playfield: Rect | undefined;
+  public static depthFirst_playfield: RectInt | undefined;
   private static depthFirst_failedOptions = new Map<string, number>();
   private static depthFirst_iterationLimit = 100000;
   private static depthFirst_depth = 0;
@@ -160,7 +160,7 @@ class Snake {
     return nodes;
   }
 
-  public static genNodesV2(config: Readonly<ISnakeConfig>, playfield: Rect, claimedNodes?: IPoint[]) {
+  public static genNodesV2(config: Readonly<ISnakeConfig>, playfield: RectInt, claimedNodes?: IPoint[]) {
     this.DEBUG_LEVEL.group(ERROR, "genNodesV2(%o, %o, %o)", config, playfield, claimedNodes);
     if ((config.startingLength || 0) < 2) {
       this.DEBUG_LEVEL.groupEnd(ERROR);
@@ -178,14 +178,14 @@ class Snake {
     }
     this.DEBUG_LEVEL.print(ERROR, "Failed to get a length of %s from %s x %s grid (Area: %s)", config.startingLength!, playfield.width, playfield.height, playfield.width * playfield.height);
     this.DEBUG_LEVEL.groupEnd(ERROR);
-    debugger;
+    this.DEBUG_LEVEL.debugger(ERROR);
     throw Error();
 
     this.hasInvalidState(nodes);
     this.DEBUG_LEVEL.print(INFO, "Start (%s): %o", nodes.length, nodes);
   }
 
-  public static attemptToGenerateNodes(config: Readonly<ISnakeConfig>, playfield: Rect, claimedNodes?: IPoint[]) {
+  public static attemptToGenerateNodes(config: Readonly<ISnakeConfig>, playfield: RectInt, claimedNodes?: IPoint[]) {
     this.DEBUG_LEVEL.group(ERROR, "attemptToGenerateNodes(%o, %o, %o)", config, playfield, claimedNodes);
     if ((config.startingLength || 0) < 2) {
       this.DEBUG_LEVEL.groupEnd(ERROR);
@@ -209,7 +209,7 @@ class Snake {
     return nodes;
   }
 
-  public static fromPreferences(config: Readonly<ISnakeConfig>, playfield: Rect, claimedNodes?: IPoint[]) {
+  public static fromPreferences(config: Readonly<ISnakeConfig>, playfield: RectInt, claimedNodes?: IPoint[]) {
     if (config.startingNodes) return new Snake(config, config.startingNodes, playfield);
     // return new Snake(config, this.attemptToGenerateNodes(config, playfield, claimedNodes), playfield);
     if (
@@ -317,7 +317,7 @@ class Snake {
       if (i === 0) return this.lastDirection;
       return Direction.fromCardinalDisplacement(this._snakeNodes[i - 1]!, e)!;
     }); */
-    return this.segments.map(e => Direction.fromCardinalDisplacement(e[0]!, e[1]!)!);
+    return this.segments.map(e => Direction.fromCardinalDisplacement(e[1]!, e[0]!)!);
   }
 
   private static directionFromPoints(s: Point[] | undefined, label: string) {
@@ -344,7 +344,8 @@ class Snake {
     return false;
   }
 
-  public static hasInvalidState(nodes: Point[]) {
+  /** @deprecated */
+  public static hasInvalidState(_nodes: Point[]) {
     /* if (nodes.filter((e, i) => i + 1 === nodes.length || e.matchingAxes(nodes[i + 1]!).length > 0).length !== nodes.length) {
       console.warn("Invalid State");
       Snake.DEBUG_LEVEL.debugger(DEBUG);
@@ -361,7 +362,7 @@ class Snake {
    * @param playfield The play area; screen collisions/wrapping will not be processed if this & `Snake.playfield` are both `undefined`.
    * @returns The line segment of collision if the snake collided with itself (or the wall if in that mode), `undefined` if it stayed alive.
    */
-  public advance(d: Direction, grow = false, playfield: Rect = this.playfield) {
+  public advance(d: Direction, grow = false, playfield: RectInt = this.playfield) {
     Snake.DEBUG_LEVEL.group(LOG, "advance(%o, %o, %o)", d, grow, playfield);
     Snake.DEBUG_LEVEL.print(LOG, "Initial nodes (%s): %o", this._snakeNodes.length, this._snakeNodes);
     Snake.DEBUG_LEVEL.do(LOG, () => this._snakeNodes.forEach(e => console.log(e)));
@@ -412,7 +413,7 @@ class Snake {
    * @param [ignoreFirstSeg=false] Should the first segment be ignored for collision detection with self?
    * @returns A falsy value if the head was successfully updated, a truthy value if the snake died.
    */
-  private updateHead(d: Direction, playfield?: Rect, ignoreFirstSeg = false) {
+  private updateHead(d: Direction, playfield?: RectInt, ignoreFirstSeg = false) {
     Snake.DEBUG_LEVEL.group(INFO, "Snake.updateHead(%o, %o, %o)", d, playfield, ignoreFirstSeg);
     const projectedPosition = Point.add(this.head, d);
     Snake.DEBUG_LEVEL.print(INFO, "Current Position: %o\nProjected Position: %o\nDirection: %o", this.head, projectedPosition, d);

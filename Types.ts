@@ -1,4 +1,4 @@
-import { DEBUG, DebugLevel, ERROR, INFO, LOG, NONE, WARN } from "./DebugLevel";
+import { DEBUG, DebugLevel, INFO, LOG, WARN } from "./DebugLevel";
 import { Direction, Point, RectInt, type IPoint } from "./Point2d";
 import Snake from "./Snake";
 
@@ -19,8 +19,9 @@ enum CauseOfDeath {
   selfCollision,
   wallCollision,
 }
-
+type RetDepthFirst = { success: boolean; nodes: Point[]; validNodes: IPoint[] };
 class NodeGeneration {
+  public static DEBUG_LEVEL = DebugLevel.INFO;
   private static findValidNeighborIndices(node: Readonly<IPoint>, validNodes: Readonly<IPoint[]>) {
     return Direction.directions
       .reduce((accumulator, direction) => {
@@ -29,6 +30,30 @@ class NodeGeneration {
         if (t !== -1) accumulator.push(t);
         return accumulator;
       }, [] as number[]);
+  }
+
+  public static generateFacingDirection(
+    // nodes: Point[],
+    validNodes: IPoint[],
+    desiredLength: number,
+    direction: Direction,
+  ) {
+    const newDesiredLength = desiredLength - 2;
+    const starts = validNodes.reduce<{ nodes: Point[]; validNodes: IPoint[] }[]>((acc, potentialHead) => {
+      const secondNodeIndex = validNodes.findIndex(e => Point.equals(Point.subtract(potentialHead, direction), e));
+      if (secondNodeIndex >= 0) acc.push({
+        nodes:      [Point.fromIPoint2d(potentialHead), Point.fromIPoint2d(validNodes[secondNodeIndex]!)],
+        validNodes: validNodes.slice(0, secondNodeIndex).concat(validNodes.slice(secondNodeIndex + 1)),
+      });
+      return acc;
+    }, []);
+    let rv: RetDepthFirst, best: RetDepthFirst | undefined;
+    do {
+      const args = starts.splice(randomIndex(starts), 1)[0]!;
+      rv = this.depthFirst(args.nodes, args.validNodes, newDesiredLength);
+      if (!best || rv.success || rv.nodes.length > rv.nodes.length) best = rv;
+    } while (!rv.success && starts.length > 0);
+    return rv;
   }
 
   // private static depthFirstStats(nodes: Point[], validNodes: IPoint[], desiredLength: number, options: Point2d[], optionSelectedIndex: number) {
@@ -44,7 +69,7 @@ class NodeGeneration {
   private static depthFirst_iterations = 0;
   private static depthFirst_maxLength = 0;
   private static depthFirst_longest:  Readonly<Point[]> = [];
-  public static depthFirst_playfield: Rect | undefined;
+  public static depthFirst_playfield: RectInt | undefined;
   private static depthFirst_failedOptions = new Map<string, number>();
   private static depthFirst_iterationLimit = 100000;
   private static depthFirst_depth = 0;
@@ -62,7 +87,7 @@ class NodeGeneration {
     nodes: Point[],
     validNodes: IPoint[],
     desiredLength: number,
-  ): { success: boolean; nodes: Point[]; validNodes: IPoint[] } {
+  ): RetDepthFirst {
     this.depthFirst_depth++;
     this.depthFirst_iterations++;
     this.DEBUG_LEVEL.do(
@@ -136,19 +161,22 @@ interface INodeConfig {
   get count(): number;
   get nodes(): Point[];
 }
-class PremadeNodeConfig implements INodeConfig {
+class PreMadeNodeConfig implements INodeConfig {
   constructor(public nodes: Point[]) {}
   get direction(): Direction { return Direction.fromCardinalDisplacement(this.nodes[1]!, this.nodes[0]!)!; }
   get count(): number { return this.nodes.length; }
 }
 class ParameterizedNodeConfig implements INodeConfig {
-  public static DEBUG_LEVEL = DebugLevel.DEBUG;
   public direction: Direction;
-  constructor(public count: number, _direction?: Direction) {
-    if (_direction) this.direction = _direction;
-  }
-  get nodes(): Point[] {
-
+  public nodes:     Point[];
+  constructor(public count: number, validNodes: IPoint[], _direction?: Direction) {
+    if (_direction) {
+      this.direction = _direction;
+      this.nodes = NodeGeneration.generateFacingDirection(validNodes, count, this.direction).nodes;
+    } else {
+      this.nodes = NodeGeneration.depthFirst([], validNodes, count).nodes;
+      this.direction = Direction.fromCardinalDisplacement(this.nodes[1]!, this.nodes[0]!)!;
+    }
   }
 }
 interface ISnakeConfig {
@@ -220,7 +248,7 @@ class EngineConfig implements IEngineConfig {
       && c.millisecondsPerUpdate > 0
       && (!c.startingNodes || (
         c.startingNodes.length === c.startingLength
-        && (!c.startingDirection || (c.startingDirection === Direction.fromCardinalDisplacement(c.startingNodes[0]!, c.startingNodes[1]!)))
+        && (!c.startingDirection || (c.startingDirection === Direction.fromCardinalDisplacement(c.startingNodes[1]!, c.startingNodes[0]!)))
       ));
   }
 
@@ -260,8 +288,8 @@ class EngineConfig implements IEngineConfig {
 
   /**
    * Calls
-   * @param c 
-   * @returns 
+   * @param c
+   * @returns
    */
   public static hasValidSnakeConfig(c: IEngineConfig) {
     return (c.startingLength || 0) > 2
@@ -278,12 +306,12 @@ export {
   EngineConfig,
   WallBehavior,
   CauseOfDeath,
-  DebugLevel,
+  /* DebugLevel,
   NONE,
   ERROR,
   WARN,
   INFO,
   LOG,
-  DEBUG,
+  DEBUG, */
   randomIndex,
 };

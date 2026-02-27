@@ -13,7 +13,7 @@ class SnakeDeprecated {
 
   // #region Initialization
   private constructor(private readonly config: ISnakeConfig, startingNodes: Point[], private readonly playfield: Rect) {
-    this._lastDirection = this.config.startingDirection;
+    this._lastDirection = this.config.startingDirection || Direction.fromCardinalDisplacement(startingNodes[1]!, startingNodes[0]!)!;
     this._snakeLength = this.config.startingLength!;
     this._snakeNodes = startingNodes.slice();
   }

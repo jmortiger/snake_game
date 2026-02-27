@@ -1,3 +1,4 @@
+import { DebugLevel } from "./DebugLevel";
 import type { GameStateEvent } from "./Events";
 import { SnakeEngine } from "./SnakeEngine";
 import { EngineConfig, type IEngineConfig } from "./Types";
@@ -34,7 +35,7 @@ class SnakeRenderer {
   public draw(args: GameStateEvent) {
     this.wrapper.fillSquareFull(0, 0, this.outputSquareWidth, { lineWidth: 2, fillStyle: "rgba(255, 255, 255, .25)" });
     const snakeSquares = args.engine.snake.filledNodes;
-    if (SnakeEngine.DEBUG_MODE) console.log("Drawn nodes (%s): %o", snakeSquares.length, snakeSquares);
+    SnakeEngine.debugLevel.print(DebugLevel.LOG, "Drawn nodes (%s): %o", snakeSquares.length, snakeSquares);
 
     this.wrapper.autoSave = true;
     this.wrapper.autoRestore = false;

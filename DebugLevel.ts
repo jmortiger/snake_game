@@ -12,8 +12,7 @@ class DebugLevel {
 
   private constructor(
     public readonly index: number,
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    public readonly _print: (...data: any[]) => void,
+    public readonly _print: (...data: any[]) => void, // eslint-disable-line @typescript-eslint/no-explicit-any
   ) {}
   // #endregion Instances
 
@@ -22,8 +21,7 @@ class DebugLevel {
   public static stringify = true;
   public static parse = true;
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  private static handleParams(data: any[]) {
+  private static handleParams(data: any[]) { // eslint-disable-line @typescript-eslint/no-explicit-any
     if (this.clone) return data.map(e => typeof e !== "object" ? e : structuredClone(e));
     if (!this.stringify) return data;
     return data.map((e) => {
@@ -35,17 +33,14 @@ class DebugLevel {
   }
   // #endregion Parameter Serialization
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  public print(level: DebugLevel, ...data: any[]) {
+  public print(level: DebugLevel, ...data: any[]) { // eslint-disable-line @typescript-eslint/no-explicit-any
     if (this.index >= level.index) level._print(...DebugLevel.handleParams(data));
   }
 
   public do<T, U>(
     level: DebugLevel,
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    cb: (printMethod: (...data: any[]) => void) => T,
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    or?: (printMethod: (...data: any[]) => void) => U,
+    cb: (printMethod: (...data: any[]) => void) => T, // eslint-disable-line @typescript-eslint/no-explicit-any
+    or?: (printMethod: (...data: any[]) => void) => U, // eslint-disable-line @typescript-eslint/no-explicit-any
   ) {
     return (this.index >= level.index && this.index !== 0)
       ? cb(level._print)
@@ -57,16 +52,14 @@ class DebugLevel {
    * @param level
    */
   public debugger(level: DebugLevel = DebugLevel.DEBUG) {
-    // eslint-disable-next-line no-debugger
-    if (this.index >= level.index && this.index !== 0) debugger;
+    if (this.index >= level.index && this.index !== 0) debugger; // eslint-disable-line no-debugger
   }
 
   /**
    * Trigger a new console group if the level is satisfied.
    * @param level
    */
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  public group(level: DebugLevel, ...data: any[]) {
+  public group(level: DebugLevel, ...data: any[]) { // eslint-disable-line @typescript-eslint/no-explicit-any
     if (this.index >= level.index && this.index !== 0) console.group(...DebugLevel.handleParams(data));
   }
 

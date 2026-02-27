@@ -151,7 +151,7 @@ class Point2d implements IPoint2d {
     return this;
   }
 
-  public static equals(p1?: IPoint2d, p2?: IPoint2d): boolean {
+  public static equals(p1: IPoint2d | undefined, p2: IPoint2d | undefined): boolean {
     return !!p1 && !!p2 && p1.x == p2.x && p1.y == p2.y;
   }
 

@@ -3,9 +3,10 @@ import { DebugInputHandler, InputHandler, type IInputHandler } from "./InputHand
 import { Direction, Point, RectInt as Rect } from "./Point2d";
 import Snake from "./Snake";
 import { EngineConfig, type IEngineConfig } from "./Types";
+import { DebugLevel } from "./DebugLevel";
 
 class SnakeEngine {
-  public static DEBUG_MODE = true;
+  public static debugLevel = DebugLevel.LOG;
 
   public inputHandler: IInputHandler = new DebugInputHandler();
 
@@ -82,14 +83,15 @@ class SnakeEngine {
   private timerId?: number;
   startGame() {
     if (this.timerId) return;
-    if (SnakeEngine.DEBUG_MODE)
-      document.onkeyup = e => this.playOnSpacebar(e);
-    else
-      this.timerId = window.setInterval(() => this.update(), this.config.millisecondsPerUpdate);
-    this.onGameOver.add(e => this.endGame());
+    SnakeEngine.debugLevel.do(
+      DebugLevel.WARN,
+      () => document.onkeyup = e => this.playOnSpaceBar(e),
+      () => this.timerId = window.setInterval(() => this.update(), this.config.millisecondsPerUpdate),
+    );
+    this.onGameOver.add(_ => this.endGame());
   }
 
-  playOnSpacebar(e: KeyboardEvent) {
+  playOnSpaceBar(e: KeyboardEvent) {
     if (e.key === " ") this.update();
   }
 
@@ -108,9 +110,10 @@ class SnakeEngine {
   public update() {
     // 1. Inputs
     const keys = this.inputHandler.getKeysDown();
+    this.inputHandler.resetState();
     let d = keys.map(e => e.direction).includes(this.snake.headDirection) ? this.snake.headDirection : (keys[0]?.direction || this.snake.headDirection);
     if (Point.equals(this.snake.headDirection, d.opposite)) {
-      if (SnakeEngine.DEBUG_MODE) console.warn("Ignoring 180 degree turn");
+      SnakeEngine.debugLevel.print(DebugLevel.WARN, "Ignoring 180 degree turn");
       d = this.snake.headDirection;
     }
     // 2. Update
