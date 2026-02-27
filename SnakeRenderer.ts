@@ -1,8 +1,9 @@
 import type { GameStateEvent } from "./Events";
-import { SnakeEngine, type EngineConfig, type IEngineConfig } from "./SnakeEngine";
+import { SnakeEngine } from "./SnakeEngine";
+import { EngineConfig, type IEngineConfig } from "./Types";
 
 class SnakeRenderer {
-  public readonly engine: SnakeEngine;
+  public readonly engine:  SnakeEngine;
   public readonly wrapper: CtxWrapper;
   public get outputSquareWidth() {
     return this.ctx.canvas.clientWidth <= this.ctx.canvas.clientHeight
@@ -18,8 +19,8 @@ class SnakeRenderer {
     return this.effectiveGridCellWidth * this.engine.playfieldRect.width;
   }
 
-  constructor(public readonly ctx: CanvasRenderingContext2D, public readonly config: EngineConfig = SnakeEngine.defaultConfig) {
-    this.engine = new SnakeEngine(10, 10, config);
+  constructor(public readonly ctx: CanvasRenderingContext2D, public readonly config: IEngineConfig = EngineConfig.defaultConfig) {
+    this.engine = new SnakeEngine(config);
     this.wrapper = new CtxWrapper(ctx);
   }
 
@@ -95,24 +96,24 @@ type CtxRectParameters = {
 };
 type CtxEllipseParameters = {
   /** The x-axis (horizontal) coordinate of the ellipse's center. */
-  x: number;
+  x:                 number;
   /** The y-axis (vertical) coordinate of the ellipse's center. */
-  y: number;
+  y:                 number;
   /** The ellipse's major-axis radius. Must be non-negative. */
-  radiusX: number;
+  radiusX:           number;
   /** The ellipse's minor-axis radius. Must be non-negative. */
-  radiusY: number;
+  radiusY:           number;
   /** The eccentric angle at which the ellipse starts, measured clockwise from the positive x-axis and expressed in radians. */
-  startAngle: number;
+  startAngle:        number;
   /** The eccentric angle at which the ellipse ends, measured clockwise from the positive x-axis and expressed in radians. */
-  endAngle: number;
+  endAngle:          number;
   /** An optional boolean value which, if true, draws the ellipse counterclockwise (anticlockwise). The default value is false (clockwise). */
   counterClockwise?: boolean;
 };
 type CtxRectOptions = {
-  fillStyle?: string;
+  fillStyle?:   string;
   strokeStyle?: string;
-  lineWidth?: number;
+  lineWidth?:   number;
 };
 /* enum DrawMethod {
   stroke, fill, clear
@@ -120,7 +121,7 @@ type CtxRectOptions = {
 type RectMethod = (x: number, y: number, w: number, h: number) => void; */
 interface CtxWrapperSettings {
   autoRestore?: boolean;
-  autoSave?: boolean;
+  autoSave?:    boolean;
 }
 class CtxWrapper implements CtxWrapperSettings {
   // #region Static

@@ -19,15 +19,22 @@ class Direction2d implements IPoint2d {
   private constructor(
     public readonly x: number,
     public readonly y: number,
-  ) {}
+  ) { Object.freeze(this); }
 
   public get opposite() { return Direction2d.fromParameters(Point2d.scale(this, -1))!; }
+  public get asPoint() { return Point2d.fromIPoint2d(this); }
 
-  public static fromCardinalDisplacement(p1: IPoint2d, p2: IPoint2d) {
+  /* public static fromCardinalDisplacement(p1: IPoint2d, p2: IPoint2d) {
     const matchingAxis = Point2d.fromIPoint2d(p1).matchingAxes(p2);
     if (matchingAxis.length !== 1) return undefined;
     if (matchingAxis[0] === Axis2d.x) return p1.y > p2.y ? this.down : this.up;
     return p1.x > p2.x ? this.right : this.left;
+  } */
+  public static fromCardinalDisplacement(from: IPoint2d, to: IPoint2d) {
+    const matchingAxis = Point2d.fromIPoint2d(from).matchingAxes(to);
+    if (matchingAxis.length !== 1) return undefined;
+    if (matchingAxis[0] === Axis2d.x) return from.y > to.y ? this.up : this.down;
+    return from.x > to.x ? this.left : this.right;
   }
 
   public static fromParameters({ x, y }: IPoint2d): Direction2d | undefined {
@@ -43,20 +50,78 @@ class Direction2d implements IPoint2d {
 }
 
 class Point2d implements IPoint2d {
+  public static terseToString = false;
+  public toString() { return `(${this.x}, ${this.y})`; }
+  public constructor(public x: number, public y: number) {}
+  // #region Typing
   public toIntPoint2d() { return { x: Math.floor(this.x), y: Math.floor(this.y) }; }
   public static toIntPoint2d(p: IPoint2d) { return { x: Math.floor(p.x), y: Math.floor(p.y) }; }
   public toIPoint2d() { return { x: this.x, y: this.y }; }
   public static toIPoint2d(p: IPoint2d) { return { x: p.x, y: p.y }; }
   public static fromIPoint2d(p: IPoint2d) { return p instanceof Point2d ? p : new Point2d(p.x, p.y); }
-  constructor(public x: number, public y: number) {}
+
+  public readonly toIntObj = this.toIntPoint2d;
+  public static readonly toIntObj = this.toIntPoint2d;
+  public readonly toObj = this.toIPoint2d;
+  public static readonly toObj = this.toIPoint2d;
+  public static readonly fromObj = this.fromIPoint2d;
+  // #endregion Typing
+
+  // #region Axis
   public getAxis(a: Axis2d) { return a === Axis2d.x ? this.x : this.y; }
   public setAxis(a: Axis2d, value: number) { return a === Axis2d.x ? (this.x = value) : (this.y = value); }
+
   public matchingAxes(v: IPoint2d) {
     const r: Axis2d[] = [];
-    if (v.x === this.x) r.push(Axis2d.x);
-    if (v.y === this.y) r.push(Axis2d.y);
+    if (this.x === v.x) r.push(Axis2d.x);
+    if (this.y === v.y) r.push(Axis2d.y);
     return r;
   }
+
+  public static matchingAxes(p1: IPoint2d, p2: IPoint2d) {
+    const r: Axis2d[] = [];
+    if (p1.x === p2.x) r.push(Axis2d.x);
+    if (p1.y === p2.y) r.push(Axis2d.y);
+    return r;
+  }
+
+  public isAxisAligned(other: IPoint2d) {
+    // return this.matchingAxes(other).length === 1;
+    let r = false;
+    if (this.x === other.x) r = !r;
+    if (this.y === other.y) r = !r;
+    return r;
+  }
+
+  public static isAxisAligned(p1: IPoint2d, p2: IPoint2d) {
+    // return this.matchingAxes(p1, p2).length === 1;
+    let r = false;
+    if (p1.x === p2.x) r = !r;
+    if (p1.y === p2.y) r = !r;
+    return r;
+  }
+  // #endregion Axis
+
+  // #region Helpers
+  public included(a: IPoint2d[]) { return a.find(e => this.equals(e)) ? true : false; }
+  public static included(p: IPoint2d, a: IPoint2d[]) { return a.find(e => this.equals(p, e)) ? true : false; }
+  public static readonly includes = this.included;
+  public indexIn(a: IPoint2d[], fromIndex?: number) {
+    return a.findIndex(
+      fromIndex === undefined
+        ? e => this.equals(e)
+        : (e, i) => i >= fromIndex && this.equals(e),
+    );
+  }
+
+  public static indexIn(p: IPoint2d, a: IPoint2d[], fromIndex?: number) {
+    return a.findIndex(
+      fromIndex === undefined
+        ? e => this.equals(p, e)
+        : (e, i) => i >= fromIndex && this.equals(p, e),
+    );
+  }
+  // #endregion Helpers
 
   // #region Math
   // #region Instance/Static Pairs
@@ -86,12 +151,12 @@ class Point2d implements IPoint2d {
     return this;
   }
 
-  public static equals(p1: IPoint2d, p2: IPoint2d): boolean {
-    return p1.x == p2.x && p1.y == p2.y;
+  public static equals(p1?: IPoint2d, p2?: IPoint2d): boolean {
+    return !!p1 && !!p2 && p1.x == p2.x && p1.y == p2.y;
   }
 
-  public equals({ x = 0, y = 0 }: IPoint2d) {
-    return this.x == x && this.y == y;
+  public equals(p?: IPoint2d) {
+    return !!p && this.x == p.x && this.y == p.y;
   }
 
   public static scale(p: IPoint2d, v: number): Point2d {
@@ -126,6 +191,14 @@ class Point2d implements IPoint2d {
 
   public magnitude(): number {
     return Math.sqrt(this.x * this.x + this.y * this.y);
+  }
+
+  public static hasMagnitudeOf(p1: IPoint2d | undefined, magnitude: number, p2: IPoint2d | undefined): boolean {
+    return !!p1 && !!p2 && Point2d.magnitude(Point2d.abs(Point2d.subtract(p1, p2))) == Math.abs(magnitude);
+  }
+
+  public hasMagnitudeOf(magnitude: number, p: IPoint2d | undefined) {
+    return !!p && Point2d.magnitude(Point2d.abs(Point2d.subtract(this, p))) == Math.abs(magnitude);
   }
   // #endregion Instance/Static Pairs
 
@@ -196,7 +269,7 @@ class Point2d implements IPoint2d {
 // }
 
 interface IRect2d {
-  width: number;
+  width:  number;
   height: number;
   center: IPoint2d;
 }
@@ -314,6 +387,7 @@ class Rect2d implements IRect2d, IExtents2d, IBounds2d {
 // TODO: Integer rectangles don't have `min + width/height` as their max point.
 class RectInt2d implements IRect2d, IExtents2d, IBounds2d {
   // #region Properties
+  // #region Dimensions
   public get width(): number { return this._width; }
   public set width(v: number) { this._width = Math.abs(v); }
 
@@ -322,6 +396,7 @@ class RectInt2d implements IRect2d, IExtents2d, IBounds2d {
 
   public get dimensions(): IPoint2d { return { x: this.width, y: this.height }; }
   public set dimensions(v: IPoint2d) { ({ x: this.width, y: this.height } = v); }
+  // #endregion Dimensions
 
   public min: IPoint2d;
   // public get max(): IPoint2d { return Point2d.add(this.min, this.dimensions); }
@@ -341,6 +416,7 @@ class RectInt2d implements IRect2d, IExtents2d, IBounds2d {
   public get yMin(): number { return this.min.y; }
   public get yMax(): number { return this.max.y; }
 
+  // #region Edges
   public get leftEdge(): Point2d[] { return [new Point2d(this.xMin, this.yMin), new Point2d(this.xMin, this.yMax)]; }
   public get rightEdge(): Point2d[] { return [new Point2d(this.xMax, this.yMin), new Point2d(this.xMax, this.yMin)]; }
   public get topEdge(): Point2d[] { return [new Point2d(this.xMin, this.yMin), new Point2d(this.xMax, this.yMin)]; }
@@ -354,6 +430,15 @@ class RectInt2d implements IRect2d, IExtents2d, IBounds2d {
   public get bottomBorderEdge(): Point2d[] { return [new Point2d(this.xMin - 1, this.yMax + 1), new Point2d(this.xMax + 1, this.yMax + 1)]; }
 
   public get borderEdges() { return [this.leftBorderEdge, this.rightBorderEdge, this.topBorderEdge, this.bottomBorderEdge]; }
+  // #endregion Edges
+
+  public get points(): IPoint2d[] {
+    const rv: IPoint2d[] = [];
+    for (let i = 0; i < this.width; i++)
+      for (let j = 0; j < this.height; j++)
+        rv.push({ x: i, y: j });
+    return rv;
+  }
   // #endregion Properties
 
   // #region Constructors
@@ -432,6 +517,15 @@ class RectInt2d implements IRect2d, IExtents2d, IBounds2d {
     while (p.y > this.yMax) p.y -= this.height;
     while (p.y < this.yMin) p.y += this.height;
     return p;
+  }
+
+  public generatePointsWhere(predicate: (value: IPoint2d, index: number/* , obj: IPoint2d[] */) => boolean) {
+    const rv: IPoint2d[] = [];
+    for (let i = 0; i < this.width; i++)
+      for (let j = 0, e = { x: i, y: j }; j < this.height; j++, e = { x: i, y: j })
+        if (predicate(e, i * this.width + j))
+          rv.push({ x: i, y: j });
+    return rv;
   }
 }
 
