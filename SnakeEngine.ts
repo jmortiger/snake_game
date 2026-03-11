@@ -30,8 +30,8 @@ class SnakeEngine {
     for (let x = this.playfieldRect.xMin; x <= this.playfieldRect.xMax; x++) {
       for (let y = this.playfieldRect.yMin; y <= this.playfieldRect.yMax; y++) {
         const p = new Point(x, y);
-        if (!this.pellets.includes(p)
-          && !this.obstacles.includes(p)
+        if (!p.included(this.pellets)
+          && !p.included(this.obstacles)
           && (!lineSegments || !lineSegments.find(e => p.intersects(e[0]!, e[1]!))))
           ret.push(p);
       }
@@ -117,7 +117,7 @@ class SnakeEngine {
     // 1. Inputs
     const keys = this.inputHandler.getKeysDown();
     this.inputHandler.resetState();
-    let d = keys.map(e => e.direction).includes(this.snake.headDirection) ? this.snake.headDirection : (keys[0]?.direction || this.snake.headDirection);
+    let d = Point.included(this.snake.headDirection, keys.map(e => e.direction)) ? this.snake.headDirection : (keys[0]?.direction || this.snake.headDirection);
     if (Point.equals(this.snake.headDirection, d.opposite)) {
       SnakeEngine.debugLevel.print(DebugLevel.WARN, "Ignoring 180 degree turn");
       d = this.snake.headDirection;
