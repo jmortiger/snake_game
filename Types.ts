@@ -97,7 +97,7 @@ class EngineConfig implements IEngineConfig {
   public static isValidConfig(c: IEngineConfig): boolean {
     return this.hasValidDimensions(c)
       && (c.startingLength || 0) > 2
-      && c.startingLength < Snake.MAX_GENERATED_LENGTH
+      && c.startingLength < NodeGeneration.MAX_GENERATED_LENGTH
 
       && this.hasValidObstacleConfig(c)
 
@@ -152,7 +152,7 @@ class EngineConfig implements IEngineConfig {
    */
   public static hasValidSnakeConfig(c: IEngineConfig) {
     return (c.startingLength || 0) > 2
-      && c.startingLength < Snake.MAX_GENERATED_LENGTH;
+      && c.startingLength < NodeGeneration.MAX_GENERATED_LENGTH;
   }
 };
 

@@ -17,209 +17,11 @@ class Snake {
     this._snakeNodes = startingNodes.slice();
   }
 
-  // #region Deprecated Generation Code
-  /** @deprecated */
-  private static readonly ALLOW_STARTING_NODES_ON_PERIMETER = true;
-  /** @deprecated */
-  private static isOnPerimeter(e: IPoint, playfield: RectInt) {
-    return e.x > playfield.xMin && e.x < playfield.xMax - 1 && e.y > playfield.yMin && e.y < playfield.yMax - 1;
-  }
-
-  /** @deprecated */
-  private static getInitialValidNodes(playfield: RectInt, claimedNodes?: IPoint[]) {
-    if (this.ALLOW_STARTING_NODES_ON_PERIMETER) {
-      if (claimedNodes) {
-        return playfield.generatePointsWhere(e => !Point.included(e, claimedNodes));
-      } else {
-        return playfield.points;
-      }
-    } else {
-      return playfield
-        .generatePointsWhere(claimedNodes
-          ? e => this.isOnPerimeter(e, playfield) && !Point.included(e, claimedNodes)
-          : e => this.isOnPerimeter(e, playfield));
-    }
-  }
-
-  /** @deprecated */
-  private static findValidNeighborIndices(node: Readonly<IPoint>, validNodes: Readonly<IPoint[]>) {
-    return Direction.directions
-      .reduce((accumulator, direction) => {
-        // const t = validNodes.findIndex(e => Point.add(node, c).equals(e));
-        const neighbor = Point.add(node, direction), t = validNodes.findIndex(e => neighbor.equals(e));
-        if (t !== -1) accumulator.push(t);
-        return accumulator;
-      }, [] as number[]);
-  }
-
-  // private static depthFirstStats(nodes: Point[], validNodes: IPoint[], desiredLength: number, options: Point2d[], optionSelectedIndex: number) {
-  // }
-
-  // private static dfProfiles: {[k:string]:number|string}[] = [];
-
-  /**
-   * This uses a simple depth-first search for generation that gets problematic
-   * past a point, so we're limiting it to this long.
-   * @deprecated
-   */
-  public static readonly MAX_GENERATED_LENGTH = 75;
-  /** @deprecated */ private static depthFirst_iterations = 0;
-  /** @deprecated */ private static depthFirst_maxLength = 0;
-  /** @deprecated */ private static depthFirst_longest:  Readonly<Point[]> = [];
-  /** @deprecated */ public static depthFirst_playfield: RectInt | undefined;
-  /** @deprecated */ private static depthFirst_iterationLimit = 100000;
-  /** @deprecated */ private static depthFirst_depth = 0;
-  /**
-   * @deprecated
-   * TODO: Add `initialValidOptions` for heuristics?
-   * TODO: Add conditions for head node (has space)?
-   * TODO: Change `nodes` to `startNode`?
-   * TODO: Change `desiredLength` to `numNodesToAdd`?
-   * @param nodes
-   * @param validNodes
-   * @param desiredLength
-   * @returns
-   */
-  public static depthFirst(
-    nodes: Point[],
-    validNodes: IPoint[],
-    desiredLength: number,
-  ): { success: boolean; nodes: Point[]; validNodes: IPoint[] } {
-    this.depthFirst_depth++;
-    this.depthFirst_iterations++;
-    this.DEBUG_LEVEL.do(
-      LOG,
-      (print) => {
-        let css = "";
-        if (nodes.length > this.depthFirst_maxLength) {
-          this.depthFirst_maxLength = nodes.length;
-          this.depthFirst_longest = nodes;
-          css = "color: green; text-decoration: underline;";
-        }
-        print("depthFirst(%s nodes, %s validNodes, desiredLength: %s)\n\titerations: %s\n%c\tmax: %s", nodes.length, validNodes.length, desiredLength, this.depthFirst_iterations, css, this.depthFirst_maxLength);
-      },
-    );
-    if (nodes.length === desiredLength) {
-      this.DEBUG_LEVEL.do(INFO, (print) => {
-        print("SUCCESS at %s iterations", this.depthFirst_iterations);
-        this.depthFirst_iterations = this.depthFirst_maxLength = 0;
-        this.depthFirst_longest = [];
-      });
-      this.depthFirst_depth--;
-      return { success: true, nodes: nodes, validNodes: validNodes };
-    }
-    if (this.depthFirst_iterations >= this.depthFirst_iterationLimit) {
-      this.DEBUG_LEVEL.do(WARN, (print) => {
-        print("FAILURE: Exceeded cap of %s iterations (%s)", this.depthFirst_iterationLimit, this.depthFirst_iterations);
-        /* this.depthFirst_iterations =  */this.depthFirst_maxLength = 0;
-        this.depthFirst_longest = [];
-      });
-      this.DEBUG_LEVEL.debugger(DEBUG);
-      this.depthFirst_depth--;
-      return { success: false, nodes: nodes, validNodes: validNodes };
-    }
-    /* if (nodes.length < 1) {
-      const nodeIndex = randomIndex(validNodes);
-      // this.DEBUG_LEVEL.print(DEBUG, "Adding starting node at %s", validNodes[nodeIndex]);
-      // TODO: Put in a loop.
-      this.depthFirst_depth--;
-      return this.depthFirst([Point.fromIPoint2d(validNodes[nodeIndex]!)], validNodes.slice(0, nodeIndex).concat(validNodes.slice(nodeIndex + 1)), desiredLength);
-    } */
-    const options = nodes.length < 1
-      ? Array.from(validNodes.keys())
-      : this.findValidNeighborIndices(nodes.at(-1)!, validNodes);
-    if (options.length < 1) {
-      this.DEBUG_LEVEL.do(INFO, (print) => {
-        print("FAILED: No options");
-        if (this.depthFirst_playfield) DebugLevel.tableFromPointsAndPlayfield(nodes, this.depthFirst_playfield);
-      });
-      this.depthFirst_depth--;
-      return { success: false, nodes: nodes, validNodes: validNodes };
-    }
-    // this.DEBUG_LEVEL.print(DEBUG, "%s options", options.length);
-    do {
-      // this.DEBUG_LEVEL.print(DEBUG, "Option %s", i);
-      // Randomize the selection to stop march towards upper-left & prevent always returning to a dead-end path
-      const nodeIndex = options.splice(randomIndex(options), 1)[0]!,
-            node = validNodes[nodeIndex]!,
-            vnCopy = validNodes.slice(0, nodeIndex).concat(validNodes.slice(nodeIndex + 1)),
-            result = this.depthFirst(nodes.concat([Point.fromIPoint2d(node)]), vnCopy, desiredLength);
-      if (result.success) { this.depthFirst_depth--; return result; }
-      // TODO: Analyze failed path for heuristics?
-    } while (options.length > 0 && this.depthFirst_iterations < this.depthFirst_iterationLimit);
-    // this.DEBUG_LEVEL.print(DEBUG, "FAILED: All options failed");
-    if (--this.depthFirst_depth === 0) this.depthFirst_iterations = 0;
-    return { success: false, nodes: nodes, validNodes: validNodes };
-  }
-
-  /** @deprecated */
-  private static removeSurplusNodes(nodes: Point[]) {
-    for (let i = 1; i < nodes.length - 1; i++) {
-      if (nodes[i + 1]!.matchingAxes(nodes[i]!)[0] == nodes[i]!.matchingAxes(nodes[i - 1]!)[0]) {
-        this.DEBUG_LEVEL.print(LOG, "Removing redundant segment");
-        nodes.splice(i, 1);
-      }
-    }
-    return nodes;
-  }
-
-  /** @deprecated */
-  public static genNodesV2(config: Readonly<ISnakeConfig>, playfield: RectInt, claimedNodes?: IPoint[]) {
-    this.DEBUG_LEVEL.group(ERROR, "genNodesV2(%o, %o, %o)", config, playfield, claimedNodes);
-    if ((config.startingLength || 0) < 2) {
-      this.DEBUG_LEVEL.groupEnd(ERROR);
-      throw new Error(`Must have a length of 2 or more; was ${config.startingLength}.`);
-    }
-    const validNodes = this.getInitialValidNodes(playfield, claimedNodes),
-          nodes: Point[] = [];
-    function removeAndAdd(index: number) { nodes.push(Point.fromIPoint2d(validNodes.splice(index, 1)[0]!)); }
-    removeAndAdd(randomIndex(validNodes));
-
-    const result = this.depthFirst(nodes, validNodes, config.startingLength!);
-    if (result.success) {
-      this.DEBUG_LEVEL.groupEnd(ERROR);
-      return this.removeSurplusNodes(result.nodes);
-    }
-    this.DEBUG_LEVEL.print(ERROR, "Failed to get a length of %s from %s x %s grid (Area: %s)", config.startingLength!, playfield.width, playfield.height, playfield.width * playfield.height);
-    this.DEBUG_LEVEL.groupEnd(ERROR);
-    this.DEBUG_LEVEL.debugger(ERROR);
-    throw Error();
-
-    this.hasInvalidState(nodes);
-    this.DEBUG_LEVEL.print(INFO, "Start (%s): %o", nodes.length, nodes);
-  }
-
-  /** @deprecated */
-  public static attemptToGenerateNodes(config: Readonly<ISnakeConfig>, playfield: RectInt, claimedNodes?: IPoint[]) {
-    this.DEBUG_LEVEL.group(ERROR, "attemptToGenerateNodes(%o, %o, %o)", config, playfield, claimedNodes);
-    if ((config.startingLength || 0) < 2) {
-      this.DEBUG_LEVEL.groupEnd(ERROR);
-      throw new Error("Must have a length of 2 or more.");
-    }
-    const validNodes = this.getInitialValidNodes(playfield, claimedNodes),
-          nodes: Point[] = [];
-    // nodes.push(Point.fromIPoint2d(validNodes.splice(randomIndex(validNodes), 1)[0]!));
-    const result = this.depthFirst(nodes, validNodes, config.startingLength!);
-    if (result.success) {
-      return this.removeSurplusNodes(result.nodes);
-    } else {
-      this.DEBUG_LEVEL.print(ERROR, "Failed to get a length of %s from %s x %s grid (Area: %s)", config.startingLength!, playfield.width, playfield.height, playfield.width * playfield.height);
-      debugger;
-      throw Error();
-    }
-
-    this.hasInvalidState(nodes);
-    this.DEBUG_LEVEL.print(INFO, "Start (%s): %o", nodes.length, nodes);
-    this.DEBUG_LEVEL.groupEnd(ERROR);
-    return nodes;
-  }
-  // #endregion Deprecated Generation Code
-
   public static fromPreferences(config: Readonly<ISnakeConfig>, playfield: RectInt, claimedNodes?: IPoint[]) {
     if (config.startingNodes) return new Snake(config, config.startingNodes, playfield);
     if (
       !config.startingLength
-      || config.startingLength > this.MAX_GENERATED_LENGTH
+      || config.startingLength > NodeGeneration.MAX_GENERATED_LENGTH
       || config.startingLength < 2
     )
       throw new Error("Invalid Config");
@@ -340,18 +142,9 @@ class Snake {
   }
   // #endregion Directions
 
+  /** @deprecated */
   public get hasInvalidState(): boolean {
     // return this._snakeNodes.filter((e, i) => i + 1 === this._snakeNodes.length || e.matchingAxes(this._snakeNodes[i + 1]!).length > 0).length !== this._snakeNodes.length;
-    return false;
-  }
-
-  /** @deprecated */
-  public static hasInvalidState(_nodes: Point[]) {
-    /* if (nodes.filter((e, i) => i + 1 === nodes.length || e.matchingAxes(nodes[i + 1]!).length > 0).length !== nodes.length) {
-      console.warn("Invalid State");
-      Snake.DEBUG_LEVEL.debugger(DEBUG);
-      return true;
-    } */
     return false;
   }
   // #endregion Accessors
@@ -366,7 +159,7 @@ class Snake {
   public advance(d: Direction, grow = false, playfield: RectInt = this.playfield) {
     Snake.DEBUG_LEVEL.group(LOG, "advance(%o, %o, %o)", d, grow, playfield);
     Snake.DEBUG_LEVEL.print(LOG, "Initial nodes (%s): %o", this._snakeNodes.length, this._snakeNodes);
-    Snake.DEBUG_LEVEL.do(LOG, () => this._snakeNodes.forEach(e => console.log(e)));
+    Snake.DEBUG_LEVEL.do(LOG, print => this._snakeNodes.forEach(e => print(e)));
     let addedExtraTurn = false;
     if (this.hasInvalidState) Snake.DEBUG_LEVEL.debugger(DEBUG);
     // If a pellet wasn't eaten...

@@ -102,8 +102,23 @@ class Point2d implements IPoint2d {
   }
   // #endregion Axis
 
-  // #region Helpers
+  // #region Array Helpers
+  /**
+   * Is this point in the given array?
+   *
+   * Workaround for `Array.includes` not checking value equality.
+   * @param a The array
+   * @returns `true` if an object w/ the same values for `x` & `y` is in `a`, `false` otherwise
+   */
   public included(a: IPoint2d[]) { return a.find(e => this.equals(e)) ? true : false; }
+  /**
+   * Is the given point in the given array?
+   *
+   * Workaround for `Array.includes` not checking value equality.
+   * @param p The point
+   * @param a The array
+   * @returns `true` if an object w/ the same values for `x` & `y` as `p` is in `a`, `false` otherwise
+   */
   public static included(p: IPoint2d, a: IPoint2d[]) { return a.find(e => this.equals(p, e)) ? true : false; }
   public static readonly includes = this.included;
   public indexIn(a: IPoint2d[], fromIndex?: number) {
@@ -121,7 +136,7 @@ class Point2d implements IPoint2d {
         : (e, i) => i >= fromIndex && this.equals(p, e),
     );
   }
-  // #endregion Helpers
+  // #endregion Array Helpers
 
   // #region Math
   // #region Instance/Static Pairs

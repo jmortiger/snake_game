@@ -1,6 +1,6 @@
 import { describe, expect, test } from "bun:test";
 import Snake from "./Snake";
-import { WallBehavior } from "./Types";
+import { NodeGeneration, WallBehavior } from "./Types";
 import { DebugLevel } from "./DebugLevel";
 import { Direction, Point2d, RectInt, type IPoint2d } from "./Point2d";
 
@@ -29,33 +29,12 @@ test(
   },
 );
 
-describe("Snake.depthFirst", () => {
-
-  test(
-    "DIRECT depthFirst TEST",
-    () => {
-      let pf: RectInt, points: IPoint2d[];
-      iterate(
-        (i, width, height) => {
-          /* Snake.depthFirst_playfield ||=  */pf ||= RectInt.fromDimensionsAndMin(width, height);
-          points ||= pf.points;
-          console.log(i);
-          expect(Snake.depthFirst([], points, i).success).toBeTrue();
-        },
-        1,
-        10,
-        10,
-      );
-    },
-  );
-});
-
 describe("Snake.fromPreferences makes a snake", () => {
   test(
     "will error when requesting something too long",
     () => {
       // Over max limit
-      expect(() => Snake.fromPreferences({ startingLength: Snake.MAX_GENERATED_LENGTH + 1, wallBehavior: WallBehavior.endGame, startingDirection: Direction.up }, RectInt.fromDimensionsAndMin(10, 10))).toThrowError();
+      expect(() => Snake.fromPreferences({ startingLength: NodeGeneration.MAX_GENERATED_LENGTH + 1, wallBehavior: WallBehavior.endGame, startingDirection: Direction.up }, RectInt.fromDimensionsAndMin(10, 10))).toThrowError();
       // TODO: Not enough space
     }
   );

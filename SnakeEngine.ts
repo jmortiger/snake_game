@@ -26,7 +26,7 @@ class SnakeEngine {
   public get currPellets() { return [...this.pellets]; }
   public getValidSpawnLocations() {
     const ret: Point[] = [];
-    const lineSegments = this.snake?.segments;
+    const lineSegments = this.snake.segments;
     for (let x = this.playfieldRect.xMin; x <= this.playfieldRect.xMax; x++) {
       for (let y = this.playfieldRect.yMin; y <= this.playfieldRect.yMax; y++) {
         const p = new Point(x, y);
@@ -59,13 +59,7 @@ class SnakeEngine {
     this.initGame();
   }
 
-  /**
-   * @todo Use pre-assigned pellets properly
-   * @returns
-   */
   public initGame() {
-    /* this._snakeNodes.push(new Point(0, 0));
-    this._snakeNodes.push(new Point(this._snakeLength, 0)); */
     const t = this.getValidSpawnLocations();
     if (typeof this.config.pelletConfig.startingObjs === "number") {
       const max = Math.min(t.length, this.config.pelletConfig.startingObjs);
@@ -75,8 +69,6 @@ class SnakeEngine {
         t.splice(Math.round(Math.random() * t.length), 1);
       }
     } else this.pellets.push(...this.config.pelletConfig.startingObjs.map(e => Point.fromIPoint2d(e)));
-
-    // requestAnimationFrame(this.update);
   }
 
   // #region Tick Management
@@ -108,11 +100,11 @@ class SnakeEngine {
   private lastUpdate = -1;
   public update() {
     if (this.lastUpdate < 0) {
-      console.log("first update at %s", this.lastUpdate = performance.now());
+      SnakeEngine.debugLevel.print(DebugLevel.INFO, "first update at %s", this.lastUpdate = performance.now());
     } else {
       const prior = this.lastUpdate;
       this.lastUpdate = performance.now();
-      console.log("Delta: %s", this.lastUpdate - prior);
+      SnakeEngine.debugLevel.print(DebugLevel.INFO, "Delta: %s", this.lastUpdate - prior);
     }
     // 1. Inputs
     const keys = this.inputHandler.getKeysDown();
