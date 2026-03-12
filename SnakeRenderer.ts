@@ -35,17 +35,13 @@ class SnakeRenderer {
     this.wrapper = new CtxWrapper(this.ctx);
   }
 
-  public startGame() {
+  public initGame() {
     this.engine.initGame();
     this.engine.onTickCompleted.add(e => this.draw(e));
-    document.onkeyup = (e: KeyboardEvent) => {
-      debugger
-      if (e.key === " ") {
-        this.engine.startGame();
-        document.onkeyup = null;
-      }
-    };
-    // this.engine.startGame();
+  }
+
+  public startGame() {
+    this.engine.startGame();
     this.draw({ engine: this.engine });
   }
 

@@ -2,7 +2,7 @@ import { SnakeEvent, type GameOverEvent, type GameStateEvent, type PelletEatenEv
 import { DebugInputHandler, InputHandler, type IInputHandler } from "./InputHandler";
 import { Direction, Point, RectInt as Rect } from "./Point2d";
 import Snake from "./Snake";
-import { EngineConfig, type IEngineConfig } from "./Types";
+import { EngineConfig, randomIndex, type IEngineConfig, type IGridObjectConfig } from "./Types";
 import { DebugLevel } from "./DebugLevel";
 
 class SnakeEngine {
@@ -17,7 +17,7 @@ class SnakeEngine {
   // #region Game State
   private timestamp?: number;
 
-  private _isGameOver: boolean;
+  private _isGameOver = false;
   public get isGameOver(): boolean { return this._isGameOver; }
   // #endregion Game State
 
@@ -46,7 +46,7 @@ class SnakeEngine {
 
   public readonly playfieldRect: Rect;
   public get currentDirection(): Direction { return this.snake.headDirection; }
-  private _snake:                Snake;
+  private _snake!:               Snake;
   public get snake() { return this._snake; }
 
   constructor(
@@ -54,22 +54,50 @@ class SnakeEngine {
     public readonly inputHandler: IInputHandler = new DebugInputHandler(),
   ) {
     this.playfieldRect = Rect.fromDimensionsAndMin(config.gridWidth, config.gridHeight);
-    this._snake = Snake.fromPreferences(this.config, this.playfieldRect);
-    this._isGameOver = false;
+    SnakeEngine.debugLevel.print(DebugLevel.INFO, "Config: %o\nPlayfield: %o", config, this.playfieldRect);
 
     this.initGame();
   }
 
-  public initGame() {
-    const t = this.getValidSpawnLocations();
-    if (typeof this.config.pelletConfig.startingObjs === "number") {
-      const max = Math.min(t.length, this.config.pelletConfig.startingObjs);
+  /**
+   * Initialize the given grid object array with the given config.
+   * @param config The configuration to use
+   * @param objArray The array to add the generated points to; WILL BE MUTATED
+   * @param validPoints The current array of valid points; WILL BE MUTATED
+   * @param [clearArray=true] Empty `objArray` before adding new points?
+   */
+  private initPointObjectArray(
+    config: IGridObjectConfig,
+    objArray: Point[],
+    validPoints: Point[],
+    clearArray = true,
+  ) {
+    if (clearArray) objArray.splice(0);
+    if (typeof config.startingObjs === "number") {
+      const max = Math.min(validPoints.length, config.startingObjs);
       for (let i = 0; i < max; i++) {
-        const index = Math.round(Math.random() * t.length);
-        this.pellets.push(t[index]!);
-        t.splice(Math.round(Math.random() * t.length), 1);
+        const index = Math.round(Math.random() * validPoints.length);
+        objArray.push(validPoints[index]!);
+        validPoints.splice(index, 1);
       }
-    } else this.pellets.push(...this.config.pelletConfig.startingObjs.map(e => Point.fromIPoint2d(e)));
+    } else objArray.push(...config.startingObjs.reduce<Point[]>((acc, e) => {
+      const v = Point.fromIPoint2d(e), i = Point.indexIn(v, validPoints);
+      if (i >= 0) {
+        acc.push(v);
+        validPoints.splice(i, 1);
+      } else {
+        SnakeEngine.debugLevel.print(DebugLevel.WARN, "Config includes invalid point; ignoring invalid point.\n\tvalidPoints: %o\n\tconfig: %o\n\tinvalidPoint: %o", validPoints, config, v);
+      }
+      return acc;
+    }, []));
+  }
+
+  public initGame() {
+    this._snake = Snake.fromPreferences(this.config, this.playfieldRect);
+    this._isGameOver = false;
+    const t = this.getValidSpawnLocations();
+    this.initPointObjectArray(this.config.pelletConfig, this.pellets, t);
+    this.initPointObjectArray(this.config.obstacleConfig, this.obstacles, t);
   }
 
   // #region Tick Management
@@ -123,8 +151,7 @@ class SnakeEngine {
 
   private generatePellet() {
     const t = this.getValidSpawnLocations();
-    const index = Math.round(Math.random() * t.length);
-    this.pellets.push(t[index]!);
+    this.pellets.push(t[randomIndex(t)]!);
   }
 
   /**

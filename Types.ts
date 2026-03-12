@@ -160,6 +160,14 @@ function randomIndex(a: Readonly<Array<unknown>>) {
   return Math.floor(a.length * Math.random());
 }
 
+function removeFromIndex<T>(a: T[], i: number): T {
+  return a.splice(i, 1)[0] as T;
+}
+
+function removeRandom<T>(a: T[]): T {
+  return a.splice(Math.floor(a.length * Math.random()), 1)[0] as T;
+}
+
 type GenerationOutput = { success: boolean; nodes: Point[]; validNodes: IPoint[] };
 class NodeGeneration {
   public static DEBUG_LEVEL = DebugLevel.INFO;
@@ -348,7 +356,7 @@ class NodeGeneration {
   }
 }
 
-export type { IEngineConfig, ISnakeConfig, GenerationOutput };
+export type { IEngineConfig, ISnakeConfig, GenerationOutput, IGridObjectConfig };
 export {
   EngineConfig,
   WallBehavior,
@@ -361,5 +369,7 @@ export {
   LOG,
   DEBUG, */
   randomIndex,
+  removeFromIndex,
+  removeRandom,
   NodeGeneration,
 };
