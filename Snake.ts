@@ -30,7 +30,7 @@ class Snake {
       rv = NodeGeneration.generateFromSnakeConfig(config, playfield, claimedNodes);
     if (!rv.success)
       throw new Error(`Only Generated ${rv.nodes.length} of ${config.startingLength!}`);
-    return new Snake(config, rv.nodes, playfield);
+    return new Snake(config, Snake.STORES_SEGMENTS_ONLY ? NodeGeneration.removeSurplusNodes(rv.nodes) : rv.nodes, playfield);
   }
   // #endregion Initialization
 
@@ -78,6 +78,18 @@ class Snake {
 
   // #region Segments
   public get segments(): Array<Point[]> {
+    if (!Snake.STORES_SEGMENTS_ONLY) {
+      return this._snakeNodes.reduce((acc, e) => {
+        if (acc.length <= 0) {
+          acc = [[e]];
+        } else if (acc.at(-1)!.length < 2 || Point.allAxisAligned(...(acc.at(-1)!), e)) {
+          acc.at(-1)![1] = e;
+        } else {
+          acc.push([acc.at(-1)!.at(-1)!, e]);
+        }
+        return acc;
+      }, [] as Array<Point[]>);
+    }
     const t = this._snakeNodes.reduce((acc, e) => {
       if (acc[0]) acc.at(-1)!.push(e);
       acc.push([e]);
@@ -86,6 +98,33 @@ class Snake {
     t.pop();
     return t;
   }
+
+  /* public get segmentIndices(): Array<number[]> {
+    if (Snake.STORES_SEGMENTS_ONLY) {
+      const v = [[0, 1]];
+      for (let i = 1; i < this._snakeNodes.length; i++) {
+        const element = this._snakeNodes[i];
+        v.push([i, ])
+      }
+      const t = this._snakeNodes.reduce((acc, e) => {
+        if (acc[0]) acc.at(-1)!.push(e);
+        acc.push([e]);
+        return acc;
+      }, [] as Array<Point[]>);
+      t.pop();
+      return t;
+    }
+    return this._snakeNodes.reduce((acc, e) => {
+      if (acc.length <= 0) {
+        acc = [[e]];
+      } else if (acc.at(-1)!.length < 2 || Point.allAxisAligned(...(acc.at(-1)!), e)) {
+        acc.at(-1)![1] = e;
+      } else {
+        acc.push([acc.at(-1)!.at(-1)!, e]);
+      }
+      return acc;
+    }, [] as Array<Point[]>);
+  } */
 
   /**
    * 0: Head Node
@@ -163,7 +202,9 @@ class Snake {
     if (!grow) {
       Snake.DEBUG_LEVEL.print(DEBUG, "Not growing; handling tail advancement");
       // ...& the tail is 1 tile away from the next turn...
-      if (Point.subtract(this.tail, this._snakeNodes.at(-2)!).magnitude() === 1) {
+      // ...or we don't solely store segments...
+      if (Point.subtract(this.tail, this._snakeNodes.at(-2)!).magnitude() === 1
+        || !Snake.STORES_SEGMENTS_ONLY) {
         Snake.DEBUG_LEVEL.print(DEBUG, "needs to move tail");
         if (this._snakeNodes.length == 2) Snake.DEBUG_LEVEL.debugger(DEBUG);
         // ...remove the tail
@@ -182,10 +223,12 @@ class Snake {
     let addedExtraTurn = false;
     // If not going straight...
     if (d !== this.lastDirection) {
-      // ...add a new turn by duplicating the head so the prior head won't be updated & the new head will...
-      this._snakeNodes.unshift(new Point(this.head.x, this.head.y));
-      // ...ignoring the duplicated nodes when testing self collisions...
-      addedExtraTurn = true;
+      if (Snake.STORES_SEGMENTS_ONLY) {
+        // ...add a new turn by duplicating the head so the prior head won't be updated & the new head will...
+        this._snakeNodes.unshift(new Point(this.head.x, this.head.y));
+        // ...ignoring the duplicated nodes when testing self collisions...
+        addedExtraTurn = true;
+      }
       // ...& updating the prior direction.
       this._lastDirection = d;
     }
@@ -229,10 +272,13 @@ class Snake {
           .find(e => projectedPosition.intersects(e[0]!, e[1]!));
       }
       : () => {
-        return (!ignoreFirstSeg
-          ? this.segments
-          : this.segments.slice(1))
-          .find(e => projectedPosition.intersects(e[0]!, e[1]!));
+        const i = projectedPosition.indexIn(this.filledNodes);
+        if (i >= 0) {
+          return (!ignoreFirstSeg
+            ? this.segments
+            : this.segments.slice(1))
+            .find(e => projectedPosition.intersects(e[0]!, e[1]!));
+        }
       };
     const assignNewHead = Snake.STORES_SEGMENTS_ONLY
       ? () => {

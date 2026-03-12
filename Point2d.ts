@@ -100,6 +100,30 @@ class Point2d implements IPoint2d {
     if (p1.y === p2.y) r = !r;
     return r;
   }
+
+  public allAxisAligned(...others: IPoint2d[]) {
+    const axes = this.matchingAxes(others[0]!);
+    switch (axes.length) {
+    case 0:
+      return false;
+    case 1:
+      return others.every(e => this.matchingAxes(e).includes(axes[0]!));
+    default:
+      return axes.some(e1 => others.every(e => this.matchingAxes(e).includes(e1)));
+    }
+  }
+
+  public static allAxisAligned(...points: IPoint2d[]) {
+    const axes = Point2d.matchingAxes(points[0]!, points[1]!);
+    switch (axes.length) {
+    case 0:
+      return false;
+    case 1:
+      return points.every(e => Point2d.matchingAxes(points[0]!, e).includes(axes[0]!));
+    default:
+      return axes.some(e1 => points.every(e => Point2d.matchingAxes(points[0]!, e).includes(e1)));
+    }
+  }
   // #endregion Axis
 
   // #region Array Helpers
