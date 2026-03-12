@@ -1,6 +1,6 @@
 import { Point, RectInt, Direction, Axis, type IPoint } from "./Point2d";
-import { NodeGeneration, randomIndex, WallBehavior, type GenerationOutput, type ISnakeConfig } from "./Types";
-import { DEBUG, DebugLevel, ERROR, INFO, LOG, WARN } from "./DebugLevel";
+import { NodeGeneration, WallBehavior, type GenerationOutput, type ISnakeConfig } from "./Types";
+import { DEBUG, DebugLevel, INFO, LOG, WARN } from "./DebugLevel";
 
 /**
  * Stores all nodes
@@ -157,18 +157,15 @@ class Snake {
    * @returns The line segment of collision if the snake collided with itself (or the wall if in that mode), `undefined` if it stayed alive.
    */
   public advance(d: Direction, grow = false, playfield: RectInt = this.playfield) {
-    Snake.DEBUG_LEVEL.group(LOG, "advance(%o, %o, %o)", d, grow, playfield);
+    Snake.DEBUG_LEVEL.group(LOG, "Snake.advance(%o, %o, %o)", d, grow, playfield);
     Snake.DEBUG_LEVEL.print(LOG, "Initial nodes (%s): %o", this._snakeNodes.length, this._snakeNodes);
-    Snake.DEBUG_LEVEL.do(LOG, print => this._snakeNodes.forEach(e => print(e)));
-    let addedExtraTurn = false;
-    if (this.hasInvalidState) Snake.DEBUG_LEVEL.debugger(DEBUG);
     // If a pellet wasn't eaten...
     if (!grow) {
       Snake.DEBUG_LEVEL.print(DEBUG, "Not growing; handling tail advancement");
       // ...& the tail is 1 tile away from the next turn...
       if (Point.subtract(this.tail, this._snakeNodes.at(-2)!).magnitude() === 1) {
         Snake.DEBUG_LEVEL.print(DEBUG, "needs to move tail");
-        if (this._snakeNodes.length == 2 || this.hasInvalidState) Snake.DEBUG_LEVEL.debugger(DEBUG);
+        if (this._snakeNodes.length == 2) Snake.DEBUG_LEVEL.debugger(DEBUG);
         // ...remove the tail
         const oldTail = this._snakeNodes.pop()!;
         Snake.DEBUG_LEVEL.print(DEBUG, "Removed tail node\nOld: %o\nNew: %o", oldTail, this.tail);
@@ -182,6 +179,7 @@ class Snake {
       // ...otherwise, leave the tail where it is & increment the length count.
       this._snakeLength++;
     }
+    let addedExtraTurn = false;
     // If not going straight...
     if (d !== this.lastDirection) {
       // ...add a new turn by duplicating the head so the prior head won't be updated & the new head will...
@@ -194,8 +192,8 @@ class Snake {
 
     // return this.updateHead(d, addedExtraTurn);
     const rv = this.updateHead(d, playfield, addedExtraTurn);
+    // TODO: Restore tail if true
     Snake.DEBUG_LEVEL.groupEnd(LOG);
-    if (this.hasInvalidState) Snake.DEBUG_LEVEL.debugger(DEBUG);
     return rv;
   }
 

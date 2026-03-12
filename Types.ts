@@ -361,13 +361,6 @@ export {
   EngineConfig,
   WallBehavior,
   CauseOfDeath,
-  /* DebugLevel,
-  NONE,
-  ERROR,
-  WARN,
-  INFO,
-  LOG,
-  DEBUG, */
   randomIndex,
   removeFromIndex,
   removeRandom,

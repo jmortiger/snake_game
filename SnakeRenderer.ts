@@ -66,11 +66,6 @@ class SnakeRenderer {
               ? "blue"
               : "black") });
           this.wrapper.autoSave = this.wrapper.autoRestore = false;
-          /* this.ctx.save();
-          this.ctx.fillStyle = "black";
-          this.ctx.ellipse(offsetWidth + Math.floor(this.effectiveGridCellWidth / 2), offsetHeight + Math.floor(this.effectiveGridCellWidth / 2), this.effectiveGridCellWidth, this.effectiveGridCellWidth, 0, 0, 2 * Math.PI);
-          this.ctx.fill();
-          this.ctx.restore(); */
         } else if (this.engine.currPellets.find(e => e.equals({ x: i, y: j }))) {
           this.wrapper.autoSave = this.wrapper.autoRestore = true;
           this.wrapper.fillSquareFull(offsetWidth, offsetHeight, this.renderedCellWidth, { lineWidth: 2, fillStyle: "yellow" });
@@ -82,9 +77,6 @@ class SnakeRenderer {
   }
 
   public drawGrid() {
-    // this.ctx.fillStyle = this.ctx.strokeStyle = "black";
-    // this.ctx.lineWidth = 2;
-    // this.ctx.strokeRect(1, 1, this.outputSquareWidth - 1, this.outputSquareWidth - 1);
     this.wrapper.autoSave = true;
     this.wrapper.autoRestore = false;
     this.wrapper.strokeSquareFull(0, 0, this.outputSquareWidth, { lineWidth: 2, strokeStyle: "black" });
@@ -95,8 +87,6 @@ class SnakeRenderer {
         this.wrapper.strokeSquareFull(i * this.renderedCellWidth, j * this.renderedCellWidth, this.renderedCellWidth);
       }
     }
-    // this.wrapper.autoSave = true;
-    // this.wrapper.autoRestore = false;
   }
 }
 

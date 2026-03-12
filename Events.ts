@@ -9,6 +9,7 @@ class SnakeEvent<A> {
     this.listeners.forEach(f => f(args));
   }
 
+  /** @todo Add `tag` to distinguish who added what for resetting */
   public add(func: SnakeDelegate<A>) {
     this.listeners.push(func);
   }
