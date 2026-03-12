@@ -55,8 +55,8 @@ class SnakeRenderer {
     this.wrapper.strokeSquareFull(0, 0, this.outputSquareWidth, { lineWidth: 2, strokeStyle: "black" });
     this.wrapper.autoSave = false;
     this.wrapper.autoRestore = false;
-    for (let i = 0, offsetWidth = 0; i <= this.engine.playfieldRect.width; i++, offsetWidth = i * this.renderedCellWidth) {
-      for (let j = 0, offsetHeight = 0; j <= this.engine.playfieldRect.height; j++, offsetHeight = j * this.renderedCellWidth) {
+    for (let i = 0, offsetWidth = 0; i < this.engine.playfieldRect.width; i++, offsetWidth = i * this.renderedCellWidth) {
+      for (let j = 0, offsetHeight = 0; j < this.engine.playfieldRect.height; j++, offsetHeight = j * this.renderedCellWidth) {
         this.wrapper.strokeSquareFull(offsetWidth, offsetHeight, this.renderedCellWidth);
         if (snakeSquares.find(e => e.x === i && e.y === j)) {
           this.wrapper.autoSave = this.wrapper.autoRestore = true;
@@ -90,8 +90,8 @@ class SnakeRenderer {
     this.wrapper.strokeSquareFull(0, 0, this.outputSquareWidth, { lineWidth: 2, strokeStyle: "black" });
     this.wrapper.autoSave = false;
     this.wrapper.autoRestore = false;
-    for (let i = 0; i <= this.engine.playfieldRect.width; i++) {
-      for (let j = 0; j <= this.engine.playfieldRect.height; j++) {
+    for (let i = 0; i < this.engine.playfieldRect.width; i++) {
+      for (let j = 0; j < this.engine.playfieldRect.height; j++) {
         this.wrapper.strokeSquareFull(i * this.renderedCellWidth, j * this.renderedCellWidth, this.renderedCellWidth);
       }
     }
