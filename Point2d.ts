@@ -432,17 +432,63 @@ class RectInt2d implements IRect2d, IExtents2d, IBounds2d {
   public get yMax(): number { return this.max.y; }
 
   // #region Edges
-  public get leftEdge(): Point2d[] { return [new Point2d(this.xMin, this.yMin), new Point2d(this.xMin, this.yMax)]; }
-  public get rightEdge(): Point2d[] { return [new Point2d(this.xMax, this.yMin), new Point2d(this.xMax, this.yMin)]; }
-  public get topEdge(): Point2d[] { return [new Point2d(this.xMin, this.yMin), new Point2d(this.xMax, this.yMin)]; }
-  public get bottomEdge(): Point2d[] { return [new Point2d(this.xMin, this.yMax), new Point2d(this.xMax, this.yMax)]; }
+  public get leftEdge(): Point2d[] {
+    return [
+      new Point2d(this.xMin, this.yMin),
+      new Point2d(this.xMin, this.yMax),
+    ];
+  }
+
+  public get rightEdge(): Point2d[] {
+    return [
+      new Point2d(this.xMax, this.yMin),
+      new Point2d(this.xMax, this.yMax),
+    ];
+  }
+
+  public get topEdge(): Point2d[] {
+    return [
+      new Point2d(this.xMin, this.yMin),
+      new Point2d(this.xMax, this.yMin),
+    ];
+  }
+
+  public get bottomEdge(): Point2d[] {
+    return [
+      new Point2d(this.xMin, this.yMax),
+      new Point2d(this.xMax, this.yMax),
+    ];
+  }
 
   public get edges() { return [this.leftEdge, this.rightEdge, this.topEdge, this.bottomEdge]; }
 
-  public get leftBorderEdge(): Point2d[] { return [new Point2d(this.xMin - 1, this.yMin - 1), new Point2d(this.xMin - 1, this.yMax + 1)]; }
-  public get rightBorderEdge(): Point2d[] { return [new Point2d(this.xMax + 1, this.yMin - 1), new Point2d(this.xMax + 1, this.yMin - 1)]; }
-  public get topBorderEdge(): Point2d[] { return [new Point2d(this.xMin - 1, this.yMin - 1), new Point2d(this.xMax + 1, this.yMin - 1)]; }
-  public get bottomBorderEdge(): Point2d[] { return [new Point2d(this.xMin - 1, this.yMax + 1), new Point2d(this.xMax + 1, this.yMax + 1)]; }
+  public get leftBorderEdge(): Point2d[] {
+    return [
+      new Point2d(this.xMin - 1, this.yMin - 1),
+      new Point2d(this.xMin - 1, this.yMax + 1),
+    ];
+  }
+
+  public get rightBorderEdge(): Point2d[] {
+    return [
+      new Point2d(this.xMax + 1, this.yMin - 1),
+      new Point2d(this.xMax + 1, this.yMax + 1),
+    ];
+  }
+
+  public get topBorderEdge(): Point2d[] {
+    return [
+      new Point2d(this.xMin - 1, this.yMin - 1),
+      new Point2d(this.xMax + 1, this.yMin - 1),
+    ];
+  }
+
+  public get bottomBorderEdge(): Point2d[] {
+    return [
+      new Point2d(this.xMin - 1, this.yMax + 1),
+      new Point2d(this.xMax + 1, this.yMax + 1),
+    ];
+  }
 
   public get borderEdges() { return [this.leftBorderEdge, this.rightBorderEdge, this.topBorderEdge, this.bottomBorderEdge]; }
   // #endregion Edges
