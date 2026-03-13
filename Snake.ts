@@ -195,6 +195,7 @@ class Snake {
   public advance(d: Direction, grow = false, playfield: RectInt = this.playfield) {
     Snake.DEBUG_LEVEL.group(LOG, "Snake.advance(%o, %o, %o)", d, grow, playfield);
     Snake.DEBUG_LEVEL.print(LOG, "Initial nodes (%s): %o", this._snakeNodes.length, this._snakeNodes);
+    const backedUpState = this._snakeNodes.slice();
     // If a pellet wasn't eaten...
     if (!grow) {
       Snake.DEBUG_LEVEL.print(DEBUG, "Not growing; handling tail advancement");
@@ -231,7 +232,10 @@ class Snake {
     }
 
     const rv = this.updateHead(d, playfield, addedExtraTurn);
-    // TODO: Restore tail if true
+    if (rv) {
+      this._snakeNodes.splice(0, this._snakeNodes.length, ...backedUpState);
+      if (grow) this._snakeLength--;
+    }
     Snake.DEBUG_LEVEL.groupEnd(LOG);
     return rv;
   }
