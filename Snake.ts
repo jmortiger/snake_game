@@ -240,7 +240,7 @@ class Snake {
     return rv;
   }
 
-  static readonly STORES_SEGMENTS_ONLY = true;
+  static readonly STORES_SEGMENTS_ONLY = false;
   /**
    *
    * @param d
