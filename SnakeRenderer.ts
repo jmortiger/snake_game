@@ -55,6 +55,7 @@ class SnakeRenderer {
   public draw(args: GameStateEvent) {
     this.wrapper.fillSquareFull(0, 0, this.outputSquareWidth, { lineWidth: 2, fillStyle: this.engine.isGameOver ? "rgba(255, 0, 0, .25)" : "rgba(255, 255, 255, .25)" });
     const snakeSquares = args.engine.snake.filledNodes;
+    const snakeSegmentPoints = args.engine.snake.segmentPoints;
     SnakeEngine.debugLevel.print(DebugLevel.LOG, "Drawn nodes (%s): %o", snakeSquares.length, snakeSquares);
 
     this.wrapper.autoSave = true;
@@ -69,7 +70,7 @@ class SnakeRenderer {
           this.wrapper.autoSave = this.wrapper.autoRestore = true;
           this.wrapper.fillSquareFull(offsetWidth, offsetHeight, this.renderedCellWidth, { lineWidth: 2, fillStyle: this.engine.snake.head.equals({ x: i, y: j })
             ? "red"
-            : (this.engine.snake.snakeNodesDebug.find(e => e.equals({ x: i, y: j }))
+            : (snakeSegmentPoints.some(e => e.equals({ x: i, y: j }))
               ? "blue"
               : "black") });
           this.wrapper.autoSave = this.wrapper.autoRestore = false;

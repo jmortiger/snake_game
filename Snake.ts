@@ -75,6 +75,19 @@ class Snake {
   }
 
   // #region Segments
+  public get segmentPoints(): Point[] {
+    if (!Snake.STORES_SEGMENTS_ONLY) {
+      return this._snakeNodes.reduce((acc, e) => {
+        if (acc.length > 1 && Point.allAxisAligned(...(acc.slice(-2)!), e)) {
+          acc.pop();
+        }
+        acc.push(e);
+        return acc;
+      }, [] as Point[]);
+    }
+    return this._snakeNodes.slice();
+  }
+
   public get segments(): Array<Point[]> {
     if (!Snake.STORES_SEGMENTS_ONLY) {
       return this._snakeNodes.reduce((acc, e) => {
