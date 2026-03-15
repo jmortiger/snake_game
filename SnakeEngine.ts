@@ -10,6 +10,7 @@ class SnakeEngine {
 
   // #region Events
   public readonly onGameOver = new SnakeEvent<GameOverEvent>();
+  public readonly onGameWon = new SnakeEvent<GameStateEvent>();
   public readonly onPelletEaten = new SnakeEvent<PelletEatenEvent>();
   public readonly onTickCompleted = new SnakeEvent<GameStateEvent>();
   // #endregion Events
@@ -149,11 +150,6 @@ class SnakeEngine {
     this.onTickCompleted.fire({ engine: this });
   }
 
-  private generatePellet() {
-    const t = this.getValidSpawnLocations();
-    this.pellets.push(t[randomIndex(t)]!);
-  }
-
   /**
    *
    * @param d The direction the snake is moving in.
@@ -174,10 +170,17 @@ class SnakeEngine {
         pelletCoordinates: this.pellets.splice(eatenIndex, 1)[0]!,
         snakeLength:       this.snake.snakeLength,
       };
+      const emptySpaces = this.getValidSpawnLocations(),
+            gameWon = emptySpaces.length < 1;
       // Then make the new one
-      if (this.pellets.length < this.config.pelletConfig.maxObjs) this.generatePellet();
+      if (!gameWon && this.pellets.length < this.config.pelletConfig.maxObjs) {
+        const newPellet = emptySpaces[randomIndex(emptySpaces)]!;
+        this.pellets.push(newPellet);
+        args.newPellets = [newPellet];
+      }
       // Then fire the event
       this.onPelletEaten.fire(args);
+      if (gameWon) this.onGameWon.fire({ engine: this });
     }
   }
 }
