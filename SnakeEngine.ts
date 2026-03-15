@@ -16,8 +16,6 @@ class SnakeEngine {
   // #endregion Events
 
   // #region Game State
-  private timestamp?: number;
-
   private _isGameOver = false;
   public get isGameOver(): boolean { return this._isGameOver; }
   // #endregion Game State
@@ -25,6 +23,7 @@ class SnakeEngine {
   private obstacles: Point[] = [];
   private pellets:   Point[] = [];
   public get currPellets() { return [...this.pellets]; }
+  public get currObstacles() { return [...this.obstacles]; }
   public getValidSpawnLocations() {
     const ret: Point[] = [];
     const lineSegments = this.snake.segments;
@@ -38,11 +37,6 @@ class SnakeEngine {
       }
     }
     return ret;
-  }
-
-  public getRandomValidSpawnLocation() {
-    const t = this.getValidSpawnLocations();
-    return t[Math.floor(Math.random() * t.length)];
   }
 
   public readonly playfieldRect: Rect;
@@ -99,6 +93,8 @@ class SnakeEngine {
     const t = this.getValidSpawnLocations();
     this.initPointObjectArray(this.config.pelletConfig, this.pellets, t);
     this.initPointObjectArray(this.config.obstacleConfig, this.obstacles, t);
+    this.onGameOver.add(_ => this.endGame());
+    this.onGameWon.add(_ => this.endGame());
   }
 
   // #region Tick Management
@@ -110,7 +106,6 @@ class SnakeEngine {
       () => document.onkeyup = e => this.playOnSpaceBar(e),
       () => this.timerId = window.setInterval(() => this.update(), this.config.millisecondsPerUpdate),
     );
-    this.onGameOver.add(_ => this.endGame());
   }
 
   playOnSpaceBar(e: KeyboardEvent) { if (e.key === " ") this.update(); }
@@ -121,12 +116,10 @@ class SnakeEngine {
     this.timerId = undefined;
   }
 
-  endGame() {
-    window.clearInterval(this.timerId);
-    alert("Game over");
-  }
+  endGame() { window.clearInterval(this.timerId); }
   // #endregion Tick Management
 
+  // #region Updating
   private lastUpdate = -1;
   public update() {
     if (this.lastUpdate < 0) {
@@ -184,6 +177,7 @@ class SnakeEngine {
       if (gameWon) this.onGameWon.fire({ engine: this });
     }
   }
+  // #endregion Updating
 }
 export {
   SnakeEngine

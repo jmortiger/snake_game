@@ -5,7 +5,7 @@ canvas.width = 300;
 canvas.height = 300;
 
 // canvas.style.imageRendering = "pixelated";
-document.body.replaceChildren(canvas);
+document.body.prepend(canvas);
 const r = new SnakeRenderer(canvas);
 
 // Wait for assets to load before setting up the game

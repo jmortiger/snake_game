@@ -1,5 +1,6 @@
 import { DebugLevel } from "./DebugLevel";
 import type { GameStateEvent } from "./Events";
+import { TouchInputHandler } from "./InputHandler";
 import { RectInt2d, Direction2d } from "./Point2d";
 import { SnakeEngine } from "./SnakeEngine";
 import { SnakeImage, type ImageParams } from "./SnakeImage";
@@ -52,7 +53,20 @@ class SnakeRenderer {
     public readonly config: IEngineConfig = EngineConfig.defaultConfig,
     public readonly renderConfig: RenderConfig = SnakeRenderer.defaultConfig,
   ) {
-    this.engine = new SnakeEngine(config);
+    const touchControls = document.querySelector("#touch-container");
+    if (touchControls) {
+      this.engine = new SnakeEngine(
+        config,
+        new TouchInputHandler({
+          up:    touchControls.querySelector("#up")!,
+          down:  touchControls.querySelector("#down")!,
+          left:  touchControls.querySelector("#left")!,
+          right: touchControls.querySelector("#right")!,
+        }),
+      );
+    } else {
+      this.engine = new SnakeEngine(config);
+    }
     this.ctx = canvas.getContext("2d")!;
     this.wrapper = new CtxWrapper(this.ctx);
     this.assetPromise = renderConfig.assets
@@ -65,11 +79,17 @@ class SnakeRenderer {
     await this.assetPromise;
     this.engine.initGame();
     this.engine.onTickCompleted.add(e => this.draw(e));
+    this.engine.onGameOver.add(_e => this.endGame(false));
+    this.engine.onGameWon.add(_e => this.endGame(true));
   }
 
   public startGame() {
     this.engine.startGame();
     this.draw({ engine: this.engine });
+  }
+
+  public endGame(won: boolean) {
+    alert(`Game over: ${won ? "You Won!" : "Sorry, you lost!"}`);
   }
 
   // #region Rotation Helpers
@@ -182,7 +202,7 @@ class SnakeRenderer {
         }
         // #endregion Render background tiles
 
-        // #region Render snake and pellets
+        // #region Render foreground elements
         if (snakeSquares.find(e => e.x === i && e.y === j)) {
           const isHead = this.engine.snake.head.equals({ x: i, y: j });
           const isSegment = snakeSegmentPoints.some(e => e.equals({ x: i, y: j }));
@@ -206,8 +226,11 @@ class SnakeRenderer {
         } else if (this.engine.currPellets.find(e => e.equals({ x: i, y: j }))) {
           if (!SnakeImage.tryDrawImage(this.ctx, "pellet", offsetWidth, offsetHeight, { x: this.renderedCellWidth, y: this.renderedCellWidth }))
             this.wrapper.fillSquareFull(offsetWidth, offsetHeight, this.renderedCellWidth, { lineWidth: 2, fillStyle: "yellow" });
+        } else if (this.engine.currObstacles.find(e => e.equals({ x: i, y: j }))) {
+          if (!SnakeImage.tryDrawImage(this.ctx, "wall", offsetWidth, offsetHeight, { x: this.renderedCellWidth, y: this.renderedCellWidth }))
+            this.wrapper.fillSquareFull(offsetWidth, offsetHeight, this.renderedCellWidth, { lineWidth: 2, fillStyle: "black" });
         }
-        // #endregion Render snake and pellets
+        // #endregion Render foreground elements
       }
     }
     if (this.engine.isGameOver) this.wrapper.fillSquareFull(0, 0, this.outputSquareWidth, { lineWidth: 2, fillStyle: "rgba(255, 0, 0, .5)" });
