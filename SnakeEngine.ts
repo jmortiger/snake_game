@@ -1,5 +1,5 @@
 import { SnakeEvent, type GameOverEvent, type GameStateEvent, type PelletEatenEvent } from "./Events";
-import { DebugInputHandler, type IInputHandler } from "./InputHandler";
+import { InputHandler, type IInputHandler } from "./InputHandler";
 import { Direction, Point, RectInt as Rect } from "./Point2d";
 import Snake from "./Snake";
 import { EngineConfig, randomIndex, type IEngineConfig, type IGridObjectConfig } from "./Types";
@@ -52,7 +52,7 @@ class SnakeEngine {
 
   constructor(
     public readonly config: IEngineConfig = EngineConfig.defaultConfig,
-    public readonly inputHandler: IInputHandler = new DebugInputHandler(),
+    public readonly inputHandler: IInputHandler = new InputHandler(),
   ) {
     this.playfieldRect = Rect.fromDimensionsAndMin(config.gridWidth, config.gridHeight);
     SnakeEngine.debugLevel.print(DebugLevel.INFO, "Config: %o\nPlayfield: %o", config, this.playfieldRect);
@@ -139,6 +139,7 @@ class SnakeEngine {
     // 1. Inputs
     const keys = this.inputHandler.getKeysDown();
     this.inputHandler.resetState();
+    // TODO: Prioritize current direction?
     let d = Point.included(this.snake.headDirection, keys.map(e => e.direction)) ? this.snake.headDirection : (keys[0]?.direction || this.snake.headDirection);
     if (Point.equals(this.snake.headDirection, d.opposite)) {
       SnakeEngine.debugLevel.print(DebugLevel.WARN, "Ignoring 180 degree turn");
