@@ -214,45 +214,17 @@ class SnakeRenderer {
   }
 }
 
-type CtxRectParameters = {
-  /** The x-axis coordinate of the rectangle's starting point. */
-  x: number;
-  /** The y-axis coordinate of the rectangle's starting point. */
-  y: number;
-  /** The rectangle's width. Positive values are to the right, and negative to the left. */
-  w: number;
-  /** The rectangle's height. Positive values are down, and negative are up. */
-  h: number;
-};
-type CtxEllipseParameters = {
-  /** The x-axis (horizontal) coordinate of the ellipse's center. */
-  x:                 number;
-  /** The y-axis (vertical) coordinate of the ellipse's center. */
-  y:                 number;
-  /** The ellipse's major-axis radius. Must be non-negative. */
-  radiusX:           number;
-  /** The ellipse's minor-axis radius. Must be non-negative. */
-  radiusY:           number;
-  /** The eccentric angle at which the ellipse starts, measured clockwise from the positive x-axis and expressed in radians. */
-  startAngle:        number;
-  /** The eccentric angle at which the ellipse ends, measured clockwise from the positive x-axis and expressed in radians. */
-  endAngle:          number;
-  /** An optional boolean value which, if true, draws the ellipse counterclockwise (anticlockwise). The default value is false (clockwise). */
-  counterClockwise?: boolean;
-};
 type CtxRectOptions = {
   fillStyle?:   string;
   strokeStyle?: string;
   lineWidth?:   number;
 };
-/* enum DrawMethod {
-  stroke, fill, clear
-}
-type RectMethod = (x: number, y: number, w: number, h: number) => void; */
+
 interface CtxWrapperSettings {
   autoRestore?: boolean;
   autoSave?:    boolean;
 }
+
 class CtxWrapper implements CtxWrapperSettings {
   // #region Static
   public static autoSave = false;
@@ -300,21 +272,6 @@ class CtxWrapper implements CtxWrapperSettings {
   ) {
     return this.prepRect(ctx, x, y, width, width, options, wrapperSettings);
   }
-
-  /* public static shellRectFull(
-    method: RectMethod,
-    ctx: CanvasRenderingContext2D,
-    x: number,
-    y: number,
-    width: number,
-    height: number,
-    { fillStyle, strokeStyle, lineWidth }: CtxRectOptions,
-    wrapperSettings: CtxWrapperSettings = { autoRestore: this.autoRestore, autoSave: this.autoSave },
-  ) {
-    const p = this.prepRect(ctx, x, y, width, height, { fillStyle, strokeStyle, lineWidth }, wrapperSettings);
-    method(p.x, p.y, p.width, p.height);
-    if (wrapperSettings.autoRestore ?? this.autoRestore) ctx.restore();
-  } */
 
   public static strokeRectFull(
     ctx: CanvasRenderingContext2D,
@@ -396,159 +353,6 @@ class CtxWrapper implements CtxWrapperSettings {
     ctx.clearRect(p.x, p.y, p.width, p.height);
     if (wrapperSettings.autoRestore ?? this.autoRestore) ctx.restore();
   }
-
-  // /**
-  //  *
-  //  * @param ctx
-  //  * @param x The x-axis (horizontal) coordinate of the ellipse's center.
-  //  * @param y The y-axis (vertical) coordinate of the ellipse's center.
-  //  * @param radiusX The ellipse's major-axis radius. Must be non-negative.
-  //  * @param radiusY The ellipse's minor-axis radius. Must be non-negative.
-  //  * @param startAngle The eccentric angle at which the ellipse starts, measured clockwise from the positive x-axis and expressed in radians.
-  //  * @param endAngle The eccentric angle at which the ellipse ends, measured clockwise from the positive x-axis and expressed in radians.
-  //  * @param counterClockwise An optional boolean value which, if true, draws the ellipse counterclockwise (anticlockwise). The default value is false (clockwise).
-  //  * @param options
-  //  * @param wrapperSettings
-  //  * @returns
-  //  */
-  // public static prepEllipse(
-  //   ctx: CanvasRenderingContext2D,
-  //   x: number,
-  //   y: number,
-  //   radiusX: number,
-  //   radiusY: number,
-  //   startAngle: number,
-  //   endAngle: number,
-  //   counterClockwise?: boolean,
-  //   options?: CtxRectOptions,
-  //   wrapperSettings: CtxWrapperSettings = { autoRestore: this.autoRestore, autoSave: this.autoSave },
-  // ) {
-  //   if (wrapperSettings.autoSave ?? this.autoSave) ctx.save();
-  //   if (options?.strokeStyle) ctx.strokeStyle = options.strokeStyle;
-  //   if (options?.fillStyle) ctx.fillStyle = options.fillStyle;
-  //   if (options?.lineWidth) ctx.lineWidth = options.lineWidth;
-  //   const offset = ctx.lineWidth / 2;
-  //   x += offset;
-  //   y += offset;
-  //   width -= ctx.lineWidth;
-  //   height -= ctx.lineWidth;
-  //   return { x, y, width, height, w: width, h: height };
-  // }
-
-  // public static prepCircle(
-  //   ctx: CanvasRenderingContext2D,
-  //   x: number,
-  //   y: number,
-  //   width: number,
-  //   options?: CtxRectOptions,
-  //   wrapperSettings: CtxWrapperSettings = { autoRestore: this.autoRestore, autoSave: this.autoSave },
-  // ) {
-  //   return this.prepEllipse(ctx, x, y, width, width, options, wrapperSettings);
-  // }
-
-  // /* public static shellEllipseFull(
-  //   method: EllipseMethod,
-  //   ctx: CanvasRenderingContext2D,
-  //   x: number,
-  //   y: number,
-  //   width: number,
-  //   height: number,
-  //   { fillStyle, strokeStyle, lineWidth }: CtxRectOptions,
-  //   wrapperSettings: CtxWrapperSettings = { autoRestore: this.autoRestore, autoSave: this.autoSave },
-  // ) {
-  //   const p = this.prepEllipse(ctx, x, y, width, height, { fillStyle, strokeStyle, lineWidth }, wrapperSettings);
-  //   method(p.x, p.y, p.width, p.height);
-  //   if (wrapperSettings.autoRestore ?? this.autoRestore) ctx.restore();
-  // } */
-
-  // public static strokeEllipseFull(
-  //   ctx: CanvasRenderingContext2D,
-  //   x: number,
-  //   y: number,
-  //   width: number,
-  //   height: number,
-  //   { strokeStyle, lineWidth }: CtxRectOptions,
-  //   wrapperSettings: CtxWrapperSettings = { autoRestore: this.autoRestore, autoSave: this.autoSave },
-  // ) {
-  //   const p = this.prepEllipse(ctx, x, y, width, height, { strokeStyle, lineWidth }, wrapperSettings);
-  //   ctx.strokeEllipse(p.x, p.y, p.width, p.height);
-  //   if (wrapperSettings.autoRestore ?? this.autoRestore) ctx.restore();
-  // }
-
-  // public static strokeCircleFull(
-  //   ctx: CanvasRenderingContext2D,
-  //   x: number,
-  //   y: number,
-  //   width: number,
-  //   { strokeStyle, lineWidth }: CtxRectOptions,
-  //   wrapperSettings: CtxWrapperSettings = { autoRestore: this.autoRestore, autoSave: this.autoSave },
-  // ) {
-  //   const p = this.prepEllipse(ctx, x, y, width, width, { strokeStyle, lineWidth }, wrapperSettings);
-  //   ctx.strokeEllipse(p.x, p.y, p.width, p.height);
-  //   if (wrapperSettings.autoRestore ?? this.autoRestore) ctx.restore();
-  // }
-
-  // public static fillEllipseFull(
-  //   ctx: CanvasRenderingContext2D,
-  //   x: number,
-  //   y: number,
-  //   width: number,
-  //   height: number,
-  //   { fillStyle, lineWidth }: CtxRectOptions,
-  //   wrapperSettings: CtxWrapperSettings = { autoRestore: this.autoRestore, autoSave: this.autoSave },
-  // ) {
-  //   const p = this.prepEllipse(ctx, x, y, width, height, { fillStyle, lineWidth }, wrapperSettings);
-  //   ctx.fillEllipse(p.x, p.y, p.width, p.height);
-  //   if (wrapperSettings.autoRestore ?? this.autoRestore) ctx.restore();
-  // }
-
-  // public static fillCircleFull(
-  //   ctx: CanvasRenderingContext2D,
-  //   x: number,
-  //   y: number,
-  //   width: number,
-  //   { fillStyle, lineWidth }: CtxRectOptions,
-  //   wrapperSettings: CtxWrapperSettings = { autoRestore: this.autoRestore, autoSave: this.autoSave },
-  // ) {
-  //   const p = this.prepEllipse(ctx, x, y, width, width, { fillStyle, lineWidth }, wrapperSettings);
-  //   ctx.fillEllipse(p.x, p.y, p.width, p.height);
-  //   if (wrapperSettings.autoRestore ?? this.autoRestore) ctx.restore();
-  // }
-
-  // public static clearEllipseFull(
-  //   ctx: CanvasRenderingContext2D,
-  //   x: number,
-  //   y: number,
-  //   width: number,
-  //   height: number,
-  //   { lineWidth }: CtxRectOptions,
-  //   wrapperSettings: CtxWrapperSettings = { autoRestore: this.autoRestore, autoSave: this.autoSave },
-  // ) {
-  //   const p = this.prepEllipse(ctx, x, y, width, height, { lineWidth }, wrapperSettings);
-  //   ctx.clearEllipse(p.x, p.y, p.width, p.height);
-  //   if (wrapperSettings.autoRestore ?? this.autoRestore) ctx.restore();
-  // }
-
-  // public static clearCircleFull(
-  //   ctx: CanvasRenderingContext2D,
-  //   x: number,
-  //   y: number,
-  //   width: number,
-  //   { lineWidth }: CtxRectOptions,
-  //   wrapperSettings: CtxWrapperSettings = { autoRestore: this.autoRestore, autoSave: this.autoSave },
-  // ) {
-  //   const p = this.prepEllipse(ctx, x, y, width, width, { lineWidth }, wrapperSettings);
-  //   ctx.clearEllipse(p.x, p.y, p.width, p.height);
-  //   if (wrapperSettings.autoRestore ?? this.autoRestore) ctx.restore();
-  // }
-
-  /* // #region Images
-  public static readonly imgMap = new Map<string, HTMLImageElement | undefined>();
-  public static registerImg(identifier: string, resourceURL: string) {
-    if (this.imgMap.has(identifier)) return;
-    this.imgMap.set(identifier, new Image())
-  }
-  // #endregion Images */
   // #endregion Static
 
   // #region Instance
@@ -592,12 +396,9 @@ class CtxWrapper implements CtxWrapperSettings {
     height: number,
     options: CtxRectOptions = {},
   ) {
-    // const orig = CtxWrapper.autoRestore;
-    // CtxWrapper.autoRestore = this.autoRestore;
     this.onSave();
     CtxWrapper.strokeRectFull(this.ctx, x, y, width, height, options, this);
     this.onRestore();
-    // CtxWrapper.autoRestore = orig;
   }
 
   public strokeSquareFull(
@@ -606,12 +407,9 @@ class CtxWrapper implements CtxWrapperSettings {
     width: number,
     options: CtxRectOptions = {},
   ) {
-    // const orig = CtxWrapper.autoRestore;
-    // CtxWrapper.autoRestore = this.autoRestore;
     this.onSave();
     CtxWrapper.strokeSquareFull(this.ctx, x, y, width, options, this);
     this.onRestore();
-    // CtxWrapper.autoRestore = orig;
   }
 
   public fillSquareFull(
@@ -620,12 +418,9 @@ class CtxWrapper implements CtxWrapperSettings {
     width: number,
     options: CtxRectOptions = {},
   ) {
-    // const orig = CtxWrapper.autoRestore;
-    // CtxWrapper.autoRestore = this.autoRestore;
     this.onSave();
     CtxWrapper.fillSquareFull(this.ctx, x, y, width, options, this);
     this.onRestore();
-    // CtxWrapper.autoRestore = orig;
   }
   // #endregion Instance
 }
