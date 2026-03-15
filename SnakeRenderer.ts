@@ -22,7 +22,7 @@ class SnakeRenderer {
       { identifier: "border", url: "assets/bgBorderLeft.png" },
       { identifier: "background", url: "assets/scale.svg" },
     ],
-    rotateBorders: false,
+    rotateBorders: true,
   };
 
   public readonly engine:  SnakeEngine;
@@ -211,7 +211,8 @@ class SnakeRenderer {
       }
     }
     if (this.engine.isGameOver) this.wrapper.fillSquareFull(0, 0, this.outputSquareWidth, { lineWidth: 2, fillStyle: "rgba(255, 0, 0, .5)" });
-    this.wrapper.strokeSquareFull(0, 0, this.outputSquareWidth, { lineWidth: 2, strokeStyle: "black" });
+    if (!this.renderConfig.rotateBorders)
+      this.wrapper.strokeSquareFull(0, 0, this.outputSquareWidth, { lineWidth: 2, strokeStyle: "black" });
     this.wrapper.autoSave = this.wrapper.autoRestore = false;
   }
 
