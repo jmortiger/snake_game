@@ -1,4 +1,8 @@
-# snake_game
+# Snake Game
+
+A browser-based Snake game built with TypeScript and Canvas.
+
+## Getting Started
 
 To install dependencies:
 
@@ -6,10 +10,8 @@ To install dependencies:
 bun install
 ```
 
-To run:
+To build the game:
 
 ```bash
-bun run index.ts
+bun run build
 ```
-
-This project was created using `bun init` in bun v1.3.2. [Bun](https://bun.com) is a fast all-in-one JavaScript runtime.

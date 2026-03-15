@@ -4,11 +4,16 @@ const canvas = document.createElement("canvas");
 // canvas.style.imageRendering = "pixelated";
 document.body.replaceChildren(canvas);
 const r = new SnakeRenderer(canvas);
-r.initGame();
-document.onkeyup = (e: KeyboardEvent) => {
-  if (e.key === " ") {
-    r.startGame();
-    document.onkeyup = null;
-  }
-};
-r.draw({ engine: r.engine });
+
+// Wait for assets to load before setting up the game
+r.initGame().then(() => {
+  document.onkeyup = (e: KeyboardEvent) => {
+    if (e.key === " ") {
+      r.startGame();
+      document.onkeyup = null;
+    }
+  };
+  r.draw({ engine: r.engine });
+}).catch((error) => {
+  console.error("Failed to load game assets:", error);
+});
