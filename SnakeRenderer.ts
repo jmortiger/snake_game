@@ -20,8 +20,9 @@ class SnakeRenderer {
       { identifier: "bgTile", url: "assets/bgTile.png" },
       { identifier: "corner", url: "assets/bgCornerTopLeft.png" },
       { identifier: "border", url: "assets/bgBorderLeft.png" },
+      { identifier: "background", url: "assets/scale.svg" },
     ],
-    rotateBorders: false,
+    rotateBorders: true,
   };
 
   public readonly engine:  SnakeEngine;
@@ -134,7 +135,21 @@ class SnakeRenderer {
   // #endregion Rotation Helpers
 
   public draw(args: GameStateEvent) {
-    this.wrapper.fillSquareFull(0, 0, this.outputSquareWidth, { lineWidth: 2, fillStyle: this.engine.isGameOver ? "rgba(255, 0, 0, .5)" : "rgba(255, 255, 255, .5)" });
+    // Fill with base background color first
+    this.wrapper.fillSquareFull(0, 0, this.outputSquareWidth, { lineWidth: 2, fillStyle: this.engine.isGameOver ? "rgba(255, 0, 0, .5)" : "#325892" });
+
+    // Draw repeating background pattern if available
+    const backgroundImg = SnakeImage.getImage("background");
+    if (backgroundImg && backgroundImg.isLoaded) {
+      const pattern = this.ctx.createPattern(backgroundImg.image, "repeat");
+      if (pattern) {
+        this.ctx.save();
+        this.ctx.fillStyle = pattern;
+        this.ctx.fillRect(0, 0, this.outputSquareWidth, this.outputSquareWidth);
+        this.ctx.restore();
+      }
+    }
+
     const snakeSquares = args.engine.snake.filledNodes;
     const snakeSegmentPoints = args.engine.snake.segmentPoints;
     SnakeEngine.debugLevel.print(DebugLevel.LOG, "Drawn nodes (%s): %o", snakeSquares.length, snakeSquares);
@@ -196,7 +211,8 @@ class SnakeRenderer {
       }
     }
     if (this.engine.isGameOver) this.wrapper.fillSquareFull(0, 0, this.outputSquareWidth, { lineWidth: 2, fillStyle: "rgba(255, 0, 0, .5)" });
-    this.wrapper.strokeSquareFull(0, 0, this.outputSquareWidth, { lineWidth: 2, strokeStyle: "black" });
+    if (!this.renderConfig.rotateBorders)
+      this.wrapper.strokeSquareFull(0, 0, this.outputSquareWidth, { lineWidth: 2, strokeStyle: "black" });
     this.wrapper.autoSave = this.wrapper.autoRestore = false;
   }
 

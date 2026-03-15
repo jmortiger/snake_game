@@ -1,6 +1,9 @@
 import SnakeRenderer from "./SnakeRenderer";
 
 const canvas = document.createElement("canvas");
+canvas.width = 300;
+canvas.height = 300;
+
 // canvas.style.imageRendering = "pixelated";
 document.body.replaceChildren(canvas);
 const r = new SnakeRenderer(canvas);
