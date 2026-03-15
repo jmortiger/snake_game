@@ -59,6 +59,10 @@ class SnakeImage {
 
   private onLoad(_e: Event) { this._isLoaded = true; }
 
+  public static getImage(identifier: string): SnakeImage | undefined {
+    return this.imgMap.get(identifier);
+  }
+
   public static tryDrawImage(ctx: CanvasRenderingContext2D, identifier: string, x: number, y: number, dimensions?: IPoint2d) {
     const i = this.imgMap.get(identifier);
     if (i) return i.tryDrawImage(ctx, x, y, dimensions);
