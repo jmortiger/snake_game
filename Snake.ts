@@ -152,7 +152,7 @@ class Snake {
   }
 
   public get headDirection(): Direction {
-    return Snake.directionFromPoints(this.headSegment, "Head");
+    return this.cachedDirection ? this.cachedDirection : Snake.directionFromPoints(this._snakeNodes.slice(0, 2), "Head");
   }
 
   public get tailDirection(): Direction {
@@ -162,6 +162,10 @@ class Snake {
 
   // #endregion Accessors
 
+  /**
+   * If defined, just screen wrapped the head, so disregard inherent direction & use this instead.
+   */
+  private cachedDirection: Direction | undefined;
   /**
    *
    * @param d The direction the snake is moving in.
@@ -227,14 +231,22 @@ class Snake {
    */
   private updateHead(d: Direction, playfield?: RectInt, ignoreFirstSeg = false) {
     Snake.DEBUG_LEVEL.group(INFO, "Snake.updateHead(%o, %o, %o)", d, playfield, ignoreFirstSeg);
+    this.cachedDirection = undefined;
     const projectedPosition = Point.add(this.head, d);
     Snake.DEBUG_LEVEL.print(INFO, "Current Position: %o\nProjected Position: %o\nDirection: %o", this.head, projectedPosition, d);
     let intersection: Point[] | undefined | false = false;
     switch (this.config.wallBehavior) {
     case WallBehavior.wrap:
       Snake.DEBUG_LEVEL.print(INFO, "Do wrap");
-      Snake.DEBUG_LEVEL.groupEnd(INFO);
-      throw new Error("Wrapping not implemented");
+      // Snake.DEBUG_LEVEL.groupEnd(INFO);
+      // throw new Error("Wrapping not implemented");
+      if ((playfield || this.playfield).findBorderIntersection(projectedPosition)) {
+        const n = (playfield || this.playfield).wrap(projectedPosition);
+        projectedPosition.x = n.x;
+        projectedPosition.y = n.y;
+        this.cachedDirection = this.lastDirection;
+      }
+      break;
     case WallBehavior.endGame:
       intersection = (playfield || this.playfield).findBorderIntersection(projectedPosition);
       if (intersection) Snake.DEBUG_LEVEL.print(WARN, "Collided with wall");
