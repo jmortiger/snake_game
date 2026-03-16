@@ -8,11 +8,46 @@
   <meta name='viewport' content='width=device-width, initial-scale=1'>
   <link rel='stylesheet' type='text/css' media='screen' href='main.css'>
   <script defer src='index.js'></script>
+  <style>
+    #touch-container {
+      display: grid;
+      grid-template: 1fr 1fr 1fr / 1fr 1fr 1fr;
+      width: 50vw;
+      height: 50vh;
+      justify-content: space-evenly;
+      align-content: space-evenly;
+      & * {
+        box-sizing: border-box;
+        width: calc(50vw / 3);
+        height: calc(50vh / 3);
+        text-align: center;
+      }
+    }
+    #up {
+      grid-row: 1 / 2;
+      grid-column: 2 / 3;
+    }
+    #down {
+      grid-row: 3 / 4;
+      grid-column: 2 / 3;
+    }
+    #left {
+      grid-row: 2 / 3;
+      grid-column: 1 / 2;
+    }
+    #right {
+      grid-row: 2 / 3;
+      grid-column: 3 / 4;
+    }
+  </style>
 </head>
 
 <body>
   <div id="touch-container">
-    <span id="up">UP</span><span id="left">left</span><span id="down">down</span><span id="right">right</span>
+    <span id="up">UP</span>
+    <span id="left">left</span>
+    <span id="down">down</span>
+    <span id="right">right</span>
   </div>
 </body>
 

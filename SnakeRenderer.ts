@@ -1,6 +1,6 @@
 import { DebugLevel } from "./DebugLevel";
 import type { GameStateEvent } from "./Events";
-import { TouchInputHandler } from "./InputHandler";
+import { InputDisplay, TouchInputHandler } from "./InputHandler";
 import { RectInt2d, Direction2d } from "./Point2d";
 import { SnakeEngine } from "./SnakeEngine";
 import { SnakeImage, type ImageParams } from "./SnakeImage";
@@ -13,6 +13,8 @@ interface RenderConfig {
 };
 
 class SnakeRenderer {
+  public static readonly DEBUG_LEVEL = DebugLevel.INFO;
+  private get _dbgLvl() { return SnakeRenderer.DEBUG_LEVEL; }
   public static readonly defaultConfig: RenderConfig = {
     assets: [
       { identifier: "head", url: "assets/snakeHead.png" },
@@ -48,6 +50,8 @@ class SnakeRenderer {
 
   public readonly ctx:           CanvasRenderingContext2D;
   public readonly assetPromise?: Promise<SnakeImage[]>;
+
+  public readonly inputDisplayManager?: InputDisplay<HTMLElement>;
   public constructor(
     public readonly canvas: HTMLCanvasElement,
     public readonly config: IEngineConfig = EngineConfig.defaultConfig,
@@ -55,15 +59,18 @@ class SnakeRenderer {
   ) {
     const touchControls = document.querySelector("#touch-container");
     if (touchControls) {
-      this.engine = new SnakeEngine(
-        config,
-        new TouchInputHandler({
-          up:    touchControls.querySelector("#up")!,
-          down:  touchControls.querySelector("#down")!,
-          left:  touchControls.querySelector("#left")!,
-          right: touchControls.querySelector("#right")!,
-        }),
-      );
+      const inputHandler = new TouchInputHandler({
+        up:    touchControls.querySelector<HTMLElement>("#up")!,
+        down:  touchControls.querySelector<HTMLElement>("#down")!,
+        left:  touchControls.querySelector<HTMLElement>("#left")!,
+        right: touchControls.querySelector<HTMLElement>("#right")!,
+      });
+      this.engine = new SnakeEngine(config, inputHandler);
+      this.inputDisplayManager = InputDisplay.fromTouchInputHandler(inputHandler);
+      const t = DebugLevel.stringify;
+      DebugLevel.stringify = false;
+      this._dbgLvl.print(DebugLevel.INFO, "Hooked up input display: %o", inputHandler.inputElements);
+      DebugLevel.stringify = t;
     } else {
       this.engine = new SnakeEngine(config);
     }
@@ -172,7 +179,7 @@ class SnakeRenderer {
 
     const snakeSquares = args.engine.snake.filledNodes;
     const snakeSegmentPoints = args.engine.snake.segmentPoints;
-    SnakeEngine.debugLevel.print(DebugLevel.LOG, "Drawn nodes (%s): %o", snakeSquares.length, snakeSquares);
+    SnakeRenderer.DEBUG_LEVEL.print(DebugLevel.LOG, "Drawn nodes (%s): %o", snakeSquares.length, snakeSquares);
 
     this.wrapper.autoSave = this.wrapper.autoRestore = true;
 
