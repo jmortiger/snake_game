@@ -69,6 +69,7 @@ class Point2d implements IPoint2d {
 
   // #region Axis
   public getAxis(a: Axis2d) { return a === Axis2d.x ? this.x : this.y; }
+  public static getAxis(p: IPoint2d, a: Axis2d) { return a === Axis2d.x ? p.x : p.y; }
   public setAxis(a: Axis2d, value: number) { return a === Axis2d.x ? (this.x = value) : (this.y = value); }
 
   public matchingAxes(v: IPoint2d) {
@@ -232,10 +233,12 @@ class Point2d implements IPoint2d {
     return Math.sqrt(this.x * this.x + this.y * this.y);
   }
 
+  // TODO: Refactor to `hasDisplacementOf`
   public static hasMagnitudeOf(p1: IPoint2d | undefined, magnitude: number, p2: IPoint2d | undefined): boolean {
     return !!p1 && !!p2 && Point2d.magnitude(Point2d.abs(Point2d.subtract(p1, p2))) == Math.abs(magnitude);
   }
 
+  // TODO: Refactor to `hasDisplacementOf`
   public hasMagnitudeOf(magnitude: number, p: IPoint2d | undefined) {
     return !!p && Point2d.magnitude(Point2d.abs(Point2d.subtract(this, p))) == Math.abs(magnitude);
   }
@@ -605,6 +608,30 @@ class RectInt2d implements IRect2d, IExtents2d, IBounds2d {
     while (p.y > this.yMax) p.y -= this.height;
     while (p.y < this.yMin) p.y += this.height;
     return p;
+  }
+
+  /**
+   * @param p The point to change; WILL BE MUTATED
+   */
+  public unwrap<P extends IPoint2d>(p: P, axis: Axis2d, operation: "increment" | "decrement") {
+    if (axis === Axis2d.x) {
+      if (operation === "decrement") p.x -= this.width;
+      else if (operation === "increment") p.x += this.width;
+    } else {
+      if (operation === "decrement") p.y -= this.height;
+      else if (operation === "increment") p.y += this.height;
+    }
+    return p;
+  }
+
+  /**
+   * @param p The point to change; WILL BE MUTATED
+   * @param reference The point to use to make a guess on how to unwrap the altered point
+   */
+  public unwrapRelative<P extends IPoint2d>(p: P, reference: Readonly<P>) {
+    const axis = Point2d.matchingAxes(p, reference)[0]! === Axis2d.x ? Axis2d.y : Axis2d.x;
+    const op = Point2d.getAxis(reference, axis) > Point2d.getAxis(p, axis) ? "increment" : "decrement";
+    return this.unwrap(p, axis, op);
   }
 
   public generatePointsWhere(predicate: (value: IPoint2d, index: number/* , obj: IPoint2d[] */) => boolean) {
