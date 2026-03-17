@@ -138,10 +138,24 @@ class Snake {
 
   // #region Directions
   public get facingDirections(): Direction[] {
-    return this.segments.map(e => Direction.fromCardinalDisplacement(e[1]!, e[0]!)!);
+    return this.segments.map((e, i) => Snake.directionFromPoints(e, `#${i}`, this.config, this.playfield));
   }
 
-  private static directionFromPoints(s: Point[] | undefined, label: string) {
+  private static isWrappedSegment(s: Point[] | undefined, config?: ISnakeConfig) {
+    if (config?.wallBehavior === WallBehavior.wrap
+      && !Snake.STORES_SEGMENTS_ONLY
+      && (s?.at(0) && s?.at(1) && !s![0]!.hasMagnitudeOf(1, s![1]))) {
+      return true;
+    }
+  }
+
+  private static directionFromPoints(s: Point[] | undefined, label: string, config?: ISnakeConfig, playfield?: RectInt) {
+    if (this.isWrappedSegment(s, config)) {
+      Snake.DEBUG_LEVEL.print(DebugLevel.INFO, "%o is Wrapped Segment", s);
+      if (!playfield) throw new Error("Can't resolve w/o playfield");
+      s![1] = playfield.unwrapRelative(new Point(s![1]!.x, s![1]!.y), s![0]!);
+      Snake.DEBUG_LEVEL.print(DebugLevel.LOG, "\tResolved to: %o", s![1]);
+    }
     const d = s ? Direction.fromCardinalDisplacement(s[1]!, s[0]!) : undefined;
     if (!d) {
       Snake.DEBUG_LEVEL.print(WARN, "Can't get %s direction; can't get %s %s", label.toLowerCase(), label.toLowerCase(), s ? "direction" : "segment");
@@ -152,16 +166,20 @@ class Snake {
   }
 
   public get headDirection(): Direction {
-    return Snake.directionFromPoints(this.headSegment, "Head");
+    return Snake.directionFromPoints(this._snakeNodes.slice(0, 2), "Head", this.config, this.playfield);
   }
 
   public get tailDirection(): Direction {
-    return Snake.directionFromPoints(this.tailSegment, "Tail");
+    return Snake.directionFromPoints(this.tailSegment, "Tail", this.config, this.playfield);
   }
   // #endregion Directions
 
   // #endregion Accessors
 
+  /**
+   * If defined, just screen wrapped the head, so disregard inherent direction & use this instead.
+   */
+  private cachedDirection: Direction | undefined;
   /**
    *
    * @param d The direction the snake is moving in.
@@ -233,8 +251,14 @@ class Snake {
     switch (this.config.wallBehavior) {
     case WallBehavior.wrap:
       Snake.DEBUG_LEVEL.print(INFO, "Do wrap");
-      Snake.DEBUG_LEVEL.groupEnd(INFO);
-      throw new Error("Wrapping not implemented");
+      // Snake.DEBUG_LEVEL.groupEnd(INFO);
+      // throw new Error("Wrapping not implemented");
+      if ((playfield || this.playfield).findBorderIntersection(projectedPosition)) {
+        const n = (playfield || this.playfield).wrap(projectedPosition);
+        projectedPosition.x = n.x;
+        projectedPosition.y = n.y;
+      }
+      break;
     case WallBehavior.endGame:
       intersection = (playfield || this.playfield).findBorderIntersection(projectedPosition);
       if (intersection) Snake.DEBUG_LEVEL.print(WARN, "Collided with wall");
