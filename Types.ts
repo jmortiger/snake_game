@@ -86,17 +86,22 @@ class EngineConfig implements IEngineConfig {
     );
   }
 
-  public static readonly defaultConfig: Readonly<IEngineConfig> = Object.freeze({
-    gridWidth:             10,
-    gridHeight:            10,
-    startingDirection:     Direction.up,
-    startingLength:        5,
-    wallBehavior:          WallBehavior.endGame,
-    pelletConfig:          { startingObjs: 1, maxObjs: 1 },
-    obstacleConfig:        { startingObjs: 0, maxObjs: 0 },
-    millisecondsPerUpdate: 1000 * 0.5, // 1 / 60,
-    startingNodes:         undefined,
-  });
+  /** An editable version of the default config. */
+  public static get defaults(): IEngineConfig {
+    return {
+      gridWidth:             10,
+      gridHeight:            10,
+      startingDirection:     Direction.up,
+      startingLength:        5,
+      wallBehavior:          WallBehavior.endGame,
+      pelletConfig:          { startingObjs: 1, maxObjs: 1 },
+      obstacleConfig:        { startingObjs: 0, maxObjs: 0 },
+      millisecondsPerUpdate: 1000 * 0.45, // 0.5,
+      startingNodes:         undefined,
+    };
+  };
+
+  public static readonly defaultConfig: Readonly<IEngineConfig> = Object.freeze(this.defaults);
 
   public static isValidConfig(c: IEngineConfig): boolean {
     return this.hasValidDimensions(c)

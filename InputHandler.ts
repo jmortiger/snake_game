@@ -90,19 +90,16 @@ class InputDisplay<T extends HTMLElement> implements IInputDisplay<T> {
   }
 
   private defaultOnInputDown(args: InputEventArgs, element: T, state = true) {
-    debugger
     element.style.backgroundColor = state ? "rgba(0, 255, 0, 1)" : "rgba(255, 0, 0, .5)";
     this.defaultBorder(args);
   }
 
   private defaultOnInputUp(args: InputEventArgs, element: T, state = false) {
-    debugger
     element.style.backgroundColor = state ? "rgba(255, 255, 0, .5)"  : "";
     this.defaultBorder(args);
   }
 
   private defaultOnKeyStateChange(args: StateEventArgs) {
-    debugger
     this.up.style.backgroundColor = args.state.up ? (args.action === InputAction.up ? "rgba(0, 255, 0, 1)" : "rgba(255, 255, 0, .5)") : "";
     this.down.style.backgroundColor = args.state.down ? (args.action === InputAction.down ? "rgba(0, 255, 0, 1)" : "rgba(255, 255, 0, .5)") : "";
     this.left.style.backgroundColor = args.state.left ? (args.action === InputAction.left ? "rgba(0, 255, 0, 1)" : "rgba(255, 255, 0, .5)") : "";
