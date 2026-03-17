@@ -26,13 +26,13 @@ class SnakeEngine {
   public get currObstacles() { return [...this.obstacles]; }
   public getValidSpawnLocations() {
     const ret: Point[] = [];
-    const lineSegments = this.snake.segments;
+    const nodes = this.snake.filledNodes;
     for (let x = this.playfieldRect.xMin; x <= this.playfieldRect.xMax; x++) {
       for (let y = this.playfieldRect.yMin; y <= this.playfieldRect.yMax; y++) {
         const p = new Point(x, y);
         if (!p.included(this.pellets)
           && !p.included(this.obstacles)
-          && (!lineSegments || !lineSegments.find(e => p.intersects(e[0]!, e[1]!))))
+          && (!(nodes?.length) || !nodes.find(e => p.equals(e))))
           ret.push(p);
       }
     }
