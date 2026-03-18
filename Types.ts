@@ -212,7 +212,7 @@ class EngineConfig implements IEngineConfig {
         actingKey = keys.at(-1)!;
       }
       let parsedValue: any; // eslint-disable-line @typescript-eslint/no-explicit-any
-      const element = form.querySelector<HTMLElement>(`[name=${CSS.escape(key)}]${form.querySelector<HTMLInputElement>(`input[name=${CSS.escape(key)}][type=radio]`) ? `[value=${value}]` : ""}`)!, iType = this.inputType(element);
+      const element = form.querySelector<HTMLElement>(`[name=${CSS.escape(key)}]${form.querySelector<HTMLInputElement>(`input[name=${CSS.escape(key)}][type=radio]`) ? `[value=${CSS.escape(value.toString())}]` : ""}`)!, iType = this.inputType(element);
       switch (iType) {
       case "number":
         parsedValue = Number(value);
@@ -290,6 +290,11 @@ class EngineConfig implements IEngineConfig {
       <label>Grid Width: <input type=number value=${c.gridWidth} name="gridWidth" /></label>
       <label>Grid Height: <input type=number value=${c.gridHeight} name="gridHeight" /></label>
       <label>Tick rate: <input type=number value=${c.millisecondsPerUpdate} name="millisecondsPerUpdate" /> milliseconds per update</label>
+      <fieldset>
+        <legend>Going off-screen:</legend>
+        <label><input type=radio value=${WallBehavior.endGame}${c.wallBehavior === WallBehavior.endGame ? " checked" : ""} name=wallBehavior data-enum=WallBehavior /> is a game over</label>
+        <label><input type=radio value=${WallBehavior.wrap}${c.wallBehavior === WallBehavior.wrap ? " checked" : ""} name=wallBehavior data-enum=WallBehavior /> wraps around to the other side</label>
+      </fieldset>
       <fieldset>
         <legend>Pellets</legend>
         <label>Starting: <input type=number value=${c.pelletConfig.startingObjs} name=pelletConfig.startingObjs /></label>
