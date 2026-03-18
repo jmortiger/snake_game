@@ -6,6 +6,12 @@ const canvas = document.querySelector("canvas") ?? (() => {
   document.body.prepend(c);
   return c;
 })();
+const ctr = document.createElement("div");
+ctr.style.display = "flex";
+ctr.style.flexFlow = "row nowrap";
+ctr.style.justifyContent = "start";
+canvas.replaceWith(ctr);
+ctr.appendChild(canvas);
 canvas.width = 300;
 canvas.height = 300;
 const ctx = canvas.getContext("2d")!;
@@ -15,6 +21,7 @@ if (!ctx) {
 
 // canvas.style.imageRendering = "pixelated";
 const state = EngineConfig.toUI(EngineConfig.defaults, initialize);
+ctr.appendChild(state.form);
 function initialize(cfg: IEngineConfig) {
   const r = new SnakeRenderer(ctx, cfg);
 

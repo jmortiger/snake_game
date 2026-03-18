@@ -286,20 +286,20 @@ class EngineConfig implements IEngineConfig {
 
   public static toUI(c: IEngineConfig, onParsed?: (cfg: IEngineConfig) => void): _CfgPromiseObjFull {
     const elem = html<HTMLFormElement>`
-    <form>
+    <form id="snake-settings" style="display: inline-flex; flex-direction: column;">
       <label>Grid Width: <input type=number value=${c.gridWidth} name="gridWidth" /></label>
       <label>Grid Height: <input type=number value=${c.gridHeight} name="gridHeight" /></label>
       <label>Tick rate: <input type=number value=${c.millisecondsPerUpdate} name="millisecondsPerUpdate" /> milliseconds per update</label>
-      <span>
-        <h5>Pellets</h5>
+      <fieldset>
+        <legend>Pellets</legend>
         <label>Starting: <input type=number value=${c.pelletConfig.startingObjs} name=pelletConfig.startingObjs /></label>
         <label>Max: <input type=number value=${c.pelletConfig.maxObjs} name=pelletConfig.maxObjs /></label>
-      </span>
-      <span>
-        <h5>Obstacles</h5>
+      </fieldset>
+      <fieldset>
+        <legend>Obstacles</legend>
         <label>Starting: <input type=number value=${c.obstacleConfig.startingObjs} name=obstacleConfig.startingObjs /></label>
         <label>Max: <input type=number value=${c.obstacleConfig.maxObjs} name=obstacleConfig.maxObjs /></label>
-      </span>
+      </fieldset>
       <input type="submit" value="Start a new game with chosen settings" />
     </form>
     `;
