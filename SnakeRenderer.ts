@@ -86,6 +86,16 @@ class SnakeRenderer {
     this.engine.onTickCompleted.add(e => this.draw(e));
     this.engine.onGameOver.add(_e => this.endGame(false));
     this.engine.onGameWon.add(_e => this.endGame(true));
+    this.engine.onGamePaused.add(_e => this.renderPausedOverlay());
+    document.addEventListener("keypress", (e: KeyboardEvent) => {
+      if (e.key === "p") {
+        if (this.engine.isGamePaused) {
+          this.engine.resumeGame();
+        } else {
+          this.engine.pauseGame();
+        }
+      }
+    });
   }
 
   public startGame() {
@@ -95,6 +105,10 @@ class SnakeRenderer {
 
   public endGame(won: boolean) {
     alert(`Game over: ${won ? "You Won!" : "Sorry, you lost!"}`);
+  }
+
+  private renderPausedOverlay() {
+    this.wrapper.fillSquareFull(0, 0, this.outputSquareWidth, { lineWidth: 2, fillStyle: "rgba(0, 0, 0, .5)" });
   }
 
   // #region Rotation Helpers

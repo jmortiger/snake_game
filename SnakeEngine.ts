@@ -1,4 +1,4 @@
-import { SnakeEvent, type GameOverEvent, type GameStateEvent, type PelletEatenEvent } from "./Events";
+import { SnakeEvent, type GameOverEvent, type GameStateEvent, type PelletEatenEvent, type TickEvent } from "./Events";
 import { InputHandler, type IInputHandler } from "./InputHandler";
 import { Direction, Point, RectInt as Rect } from "./Point2d";
 import Snake from "./Snake";
@@ -11,13 +11,23 @@ class SnakeEngine {
   // #region Events
   public readonly onGameOver = new SnakeEvent<GameOverEvent>();
   public readonly onGameWon = new SnakeEvent<GameStateEvent>();
+  public readonly onGamePaused = new SnakeEvent<GameStateEvent>();
+  public readonly onGameResumed = new SnakeEvent<GameStateEvent>();
   public readonly onPelletEaten = new SnakeEvent<PelletEatenEvent>();
-  public readonly onTickCompleted = new SnakeEvent<GameStateEvent>();
+  public readonly onTickCompleted = new SnakeEvent<TickEvent>();
+  public readonly onTickStarted = new SnakeEvent<TickEvent>();
   // #endregion Events
 
   // #region Game State
   private _isGameOver = false;
   public get isGameOver(): boolean { return this._isGameOver; }
+  private _isGamePaused = true;
+  public get isGamePaused(): boolean { return this._isGamePaused; }
+  private _tickCount = 0;
+  private _pelletsEaten = 0;
+  private lastUpdateTimestamp = -1;
+  private firstUpdateTimestamp = -1;
+  private inGameTime = 0;
   // #endregion Game State
 
   private obstacles: Point[] = [];
@@ -89,7 +99,14 @@ class SnakeEngine {
 
   public initGame() {
     this._snake = Snake.fromPreferences(this.config, this.playfieldRect);
+
+    this.timerId = undefined;
     this._isGameOver = false;
+    this._isGamePaused = true;
+    this._tickCount = this._pelletsEaten = 0;
+    this.lastUpdateTimestamp = this.firstUpdateTimestamp = -1;
+    this.inGameTime = 0;
+
     const t = this.getValidSpawnLocations();
     this.initPointObjectArray(this.config.pelletConfig, this.pellets, t);
     this.initPointObjectArray(this.config.obstacleConfig, this.obstacles, t);
@@ -99,36 +116,49 @@ class SnakeEngine {
 
   // #region Tick Management
   private timerId?: number;
-  startGame() {
-    if (this.timerId) return;
+  startGame() { this.resumeGame(); }
+
+  resumeGame() {
+    if (!this._isGamePaused && this.timerId) return;
+    this._isGamePaused = false;
     SnakeEngine.debugLevel.do(
       DebugLevel.DEBUG,
       () => document.onkeyup = e => this.playOnSpaceBar(e),
       () => this.timerId = window.setInterval(() => this.update(), this.config.millisecondsPerUpdate),
     );
+    this.lastUpdateTimestamp = -1;
+    this.onGameResumed.fire({ engine: this });
   }
 
   playOnSpaceBar(e: KeyboardEvent) { if (e.key === " ") this.update(); }
 
-  pauseGame() {
+  public pauseGame() {
     if (!this.timerId) return;
     window.clearInterval(this.timerId);
     this.timerId = undefined;
+
+    this._isGamePaused = true;
+    this.onGamePaused.fire({ engine: this });
   }
 
   endGame() { window.clearInterval(this.timerId); }
   // #endregion Tick Management
 
   // #region Updating
-  private lastUpdate = -1;
   public update() {
-    if (this.lastUpdate < 0) {
-      SnakeEngine.debugLevel.print(DebugLevel.INFO, "first update at %s", this.lastUpdate = performance.now());
+    if (this.lastUpdateTimestamp < 0) {
+      if (this.firstUpdateTimestamp < 0) {
+        this.firstUpdateTimestamp = this.lastUpdateTimestamp = performance.now();
+        SnakeEngine.debugLevel.print(DebugLevel.LOG, "First update at %s", this.lastUpdateTimestamp);
+      } else {
+        this.lastUpdateTimestamp = performance.now();
+        SnakeEngine.debugLevel.print(DebugLevel.LOG, "Unpaused at %s", this.lastUpdateTimestamp);
+      }
     } else {
-      const prior = this.lastUpdate;
-      this.lastUpdate = performance.now();
-      SnakeEngine.debugLevel.print(DebugLevel.INFO, "Delta: %s", this.lastUpdate - prior);
+      const prior = this.lastUpdateTimestamp, deltaTime = (this.lastUpdateTimestamp = performance.now()) - prior;
+      SnakeEngine.debugLevel.print(DebugLevel.INFO, "Delta: %s", deltaTime);
     }
+    this.onTickStarted.fire({ engine: this, tickCount: ++this._tickCount });
     // 1. Inputs
     const keys = this.inputHandler.getKeysDown();
     this.inputHandler.resetState();
@@ -141,7 +171,7 @@ class SnakeEngine {
     // 2. Update
     this.advance(d);
     // 3. Fire event
-    this.onTickCompleted.fire({ engine: this });
+    this.onTickCompleted.fire({ engine: this, tickCount: this._tickCount });
   }
 
   /**
@@ -163,6 +193,7 @@ class SnakeEngine {
         engine:            this,
         pelletCoordinates: this.pellets.splice(eatenIndex, 1)[0]!,
         snakeLength:       this.snake.snakeLength,
+        totalEaten:        ++this._pelletsEaten,
       };
       const emptySpaces = this.getValidSpawnLocations(),
             gameWon = emptySpaces.length < 1;

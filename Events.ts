@@ -42,6 +42,9 @@ class SnakeEvent<A> {
 interface GameStateEvent {
   engine: SnakeEngine;
 }
+interface TickEvent extends GameStateEvent {
+  tickCount: number;
+}
 interface GameOverEvent extends GameStateEvent {
   collision: Point[];
 }
@@ -50,6 +53,7 @@ interface PelletEatenEvent extends GameStateEvent {
   snakeLength:       number;
   pelletCoordinates: Point;
   newPellets?:       Point[];
+  totalEaten:        number;
 }
 
 export {
@@ -60,4 +64,5 @@ export type {
   GameStateEvent,
   GameOverEvent,
   PelletEatenEvent,
+  TickEvent,
 };
