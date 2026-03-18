@@ -287,8 +287,7 @@ class Snake {
         this.head.y = projectedPosition.y;
       }
       : () => this._snakeNodes.unshift(projectedPosition);
-    // TODO: Rule-out self-intersections on snakes with too few segments?
-    intersection ||= /* (this.segments.length - (ignoreFirstSeg ? 1 : 0)) ? undefined : */ checkSelfIntersection();
+    intersection ||= checkSelfIntersection();
     if (intersection) {
       Snake.DEBUG_LEVEL.print(WARN, "Collided on segment %o", intersection);
       Snake.DEBUG_LEVEL.groupEnd(INFO);
@@ -298,16 +297,6 @@ class Snake {
     assignNewHead();
     Snake.DEBUG_LEVEL.groupEnd(INFO);
   }
-
-  // #region External Helpers
-  // TODO: If direction matters
-  // public findNodeDirection(node: Point) {
-  //   const tNodes = this.filledNodes;
-  //   if (tNodes.find(e => node.equals(e))) {
-
-  //   }
-  // }
-  // #endregion External Helpers
 }
 
 export default Snake;

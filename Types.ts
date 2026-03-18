@@ -333,7 +333,6 @@ class NodeGeneration {
   private static findValidNeighborIndices(node: Readonly<IPoint>, validNodes: Readonly<IPoint[]>) {
     return Direction.directions
       .reduce((accumulator, direction) => {
-        // const t = validNodes.findIndex(e => Point.add(node, c).equals(e));
         const neighbor = Point.add(node, direction), t = validNodes.findIndex(e => neighbor.equals(e));
         if (t !== -1) accumulator.push(t);
         return accumulator;
@@ -341,12 +340,11 @@ class NodeGeneration {
   }
 
   private static generateFacingDirection(
-    // nodes: Point[],
     validNodes: IPoint[],
     desiredLength: number,
     direction: Direction,
   ) {
-    const newDesiredLength = desiredLength/*  - 2 */;
+    const newDesiredLength = desiredLength;
     const starts = validNodes.reduce<{ nodes: Point[]; validNodes: IPoint[] }[]>((acc, potentialHead, i) => {
       const secondNodeIndex = validNodes.findIndex(e => Point.equals(Point.subtract(potentialHead, direction), e));
       if (secondNodeIndex >= 0) {
@@ -450,13 +448,6 @@ class NodeGeneration {
       this.depthFirst_depth--;
       return { success: false, nodes: nodes, validNodes: validNodes };
     }
-    /* if (nodes.length < 1) {
-      const nodeIndex = randomIndex(validNodes);
-      // this.DEBUG_LEVEL.print(DEBUG, "Adding starting node at %s", validNodes[nodeIndex]);
-      // TODO: Put in a loop.
-      this.depthFirst_depth--;
-      return this.depthFirst([Point.fromIPoint2d(validNodes[nodeIndex]!)], validNodes.slice(0, nodeIndex).concat(validNodes.slice(nodeIndex + 1)), desiredLength);
-    } */
     const options = nodes.length < 1
       ? Array.from(validNodes.keys())
       : this.findValidNeighborIndices(nodes.at(-1)!, validNodes);
@@ -468,18 +459,16 @@ class NodeGeneration {
       this.depthFirst_depth--;
       return { success: false, nodes: nodes, validNodes: validNodes };
     }
-    // this.DEBUG_LEVEL.print(DEBUG, "%s options", options.length);
+    this.DEBUG_LEVEL.print(DEBUG, "%s options", options.length);
     do {
-      // this.DEBUG_LEVEL.print(DEBUG, "Option %s", i);
       // Randomize the selection to stop march towards upper-left & prevent always returning to a dead-end path
       const nodeIndex = options.splice(randomIndex(options), 1)[0]!,
             node = validNodes[nodeIndex]!,
             vnCopy = validNodes.slice(0, nodeIndex).concat(validNodes.slice(nodeIndex + 1)),
             result = this.depthFirst(nodes.concat([Point.fromIPoint2d(node)]), vnCopy, desiredLength);
       if (result.success) { this.depthFirst_depth--; return result; }
-      // TODO: Analyze failed path for heuristics?
     } while (options.length > 0 && this.depthFirst_iterations < this.depthFirst_iterationLimit);
-    // this.DEBUG_LEVEL.print(DEBUG, "FAILED: All options failed");
+    this.DEBUG_LEVEL.print(DEBUG, "FAILED: All options failed");
     if (--this.depthFirst_depth === 0) this.depthFirst_iterations = 0;
     return { success: false, nodes: nodes, validNodes: validNodes };
   }

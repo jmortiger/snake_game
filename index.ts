@@ -19,7 +19,6 @@ if (!ctx) {
   throw Error("Failed to retrieve canvas context.");
 }
 
-// canvas.style.imageRendering = "pixelated";
 const state = EngineConfig.toUI(EngineConfig.defaults, initialize);
 ctr.appendChild(state.form);
 function initialize(cfg: IEngineConfig) {
@@ -39,5 +38,5 @@ function initialize(cfg: IEngineConfig) {
     console.error("Failed to load game assets:", error);
   });
 }
-canvas.insertAdjacentElement("afterend", state.form); // document.body.appendChild(state.form);
+canvas.insertAdjacentElement("afterend", state.form);
 initialize(state.defaults);

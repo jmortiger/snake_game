@@ -76,7 +76,6 @@ class DebugLevel {
     for (let j = 0; j < playfield.height; j++) {
       const temp = [];
       for (let i = 0; i < playfield.width; i++) {
-        // temp.push(points.find(e => Point.equals(e, { x: i, y: j })));
         if (asIndex) {
           temp.push(points.findIndex(e => Point.equals(e, { x: i, y: j })));
           continue;
@@ -105,18 +104,6 @@ class DebugLevel {
     }
     console.table(arr);
   }
-  /* public static tableFromPoints(points: IPoint[], playfield: RectInt, asStrings = false) {
-    const arr: Array<Array<IPoint | string | undefined>> = [];
-    for (let j = 0; j < playfield.height; j++) {
-      const temp = [];
-      for (let i = 0; i < playfield.width; i++) {
-        temp.push(points.find(e => Point.equals(e, { x: i, y: j })));
-        if (asStrings) temp[temp.length - 1] = JSON.stringify(temp.at(-1));
-      }
-      arr.push(temp);
-    }
-    console.table(arr);
-  } */
 }
 
 const NONE  = DebugLevel.NONE,

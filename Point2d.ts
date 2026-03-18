@@ -24,12 +24,6 @@ class Direction2d implements IPoint2d {
   public get opposite() { return Direction2d.fromParameters(Point2d.scale(this, -1))!; }
   public get asPoint() { return Point2d.fromIPoint2d(this); }
 
-  /* public static fromCardinalDisplacement(p1: IPoint2d, p2: IPoint2d) {
-    const matchingAxis = Point2d.fromIPoint2d(p1).matchingAxes(p2);
-    if (matchingAxis.length !== 1) return undefined;
-    if (matchingAxis[0] === Axis2d.x) return p1.y > p2.y ? this.down : this.up;
-    return p1.x > p2.x ? this.right : this.left;
-  } */
   public static fromCardinalDisplacement(from: IPoint2d, to: IPoint2d) {
     const matchingAxis = Point2d.fromIPoint2d(from).matchingAxes(to);
     if (matchingAxis.length !== 1) return undefined;
@@ -43,7 +37,6 @@ class Direction2d implements IPoint2d {
     } else if (y === 0) {
       return x > 0 ? this.right : this.left;
     } else {
-      // throw new Error("");
       return undefined;
     }
   }
@@ -87,7 +80,6 @@ class Point2d implements IPoint2d {
   }
 
   public isAxisAligned(other: IPoint2d) {
-    // return this.matchingAxes(other).length === 1;
     let r = false;
     if (this.x === other.x) r = !r;
     if (this.y === other.y) r = !r;
@@ -95,7 +87,6 @@ class Point2d implements IPoint2d {
   }
 
   public static isAxisAligned(p1: IPoint2d, p2: IPoint2d) {
-    // return this.matchingAxes(p1, p2).length === 1;
     let r = false;
     if (p1.x === p2.x) r = !r;
     if (p1.y === p2.y) r = !r;
@@ -301,15 +292,6 @@ class Point2d implements IPoint2d {
   }
 }
 
-// class IntPoint2d extends Point2d {
-//   constructor(x: number, y: number) {
-//     super(Math.floor(x), Math.floor(y));
-//   }
-
-//   // public override get x(): number { return super.x; }
-//   // public override set x(v: number) { super.x = Math.floor(v); }
-// }
-
 interface IRect2d {
   width:  number;
   height: number;
@@ -441,7 +423,6 @@ class RectInt2d implements IRect2d, IExtents2d, IBounds2d {
   // #endregion Dimensions
 
   public min: IPoint2d;
-  // public get max(): IPoint2d { return Point2d.add(this.min, this.dimensions); }
   public get max(): IPoint2d { return Point2d.add(this.min, Point2d.subtract(this.dimensions, { x: 1, y: 1 })); }
   public get xExtent(): number { return this.width / 2; }
   public set xExtent(v: number) { this.width = v * 2; }
@@ -533,7 +514,7 @@ class RectInt2d implements IRect2d, IExtents2d, IBounds2d {
   /**
    * @param max Inclusive
    */
-  public static fromMinMax(min: IPoint2d, max: IPoint2d/* , inclusiveMax = true, inclusiveMin = true */) {
+  public static fromMinMax(min: IPoint2d, max: IPoint2d) {
     if (min.x > max.x) {
       const t = min.x;
       min.x = max.x;
@@ -547,11 +528,6 @@ class RectInt2d implements IRect2d, IExtents2d, IBounds2d {
     const dimensions = Point2d.add(Point2d.subtract(max, min), { x: 1, y: 1 });
     return this.fromDimensionsAndMin(dimensions.x, dimensions.y, min);
   }
-
-  // TODO: Figure it out
-  // public static fromExtents(xMin: number, xMax: number, yMin: number, yMax: number) {
-  //   return this.fromMinMax({ x: xMin, y: yMin }, { x: xMax, y: yMax });
-  // }
 
   public static fromDimensionsAndCenter(width: number, height: number, point: IPoint2d) {
     // if (width < 0) width *= -1;
@@ -575,9 +551,6 @@ class RectInt2d implements IRect2d, IExtents2d, IBounds2d {
   }
   // #endregion Constructors
 
-  // public intersects(p: IPoint2d) {
-  //   return (this.xMin <= p.x && this.xMax >= p.x && this.yMin <= p.y && this.yMax >= p.y);
-  // }
   public intersects(p: IPoint2d) {
     return this.xMin <= p.x && this.xMax >= p.x && this.yMin <= p.y && this.yMax >= p.y;
   }
@@ -634,7 +607,7 @@ class RectInt2d implements IRect2d, IExtents2d, IBounds2d {
     return this.unwrap(p, axis, op);
   }
 
-  public generatePointsWhere(predicate: (value: IPoint2d, index: number/* , obj: IPoint2d[] */) => boolean) {
+  public generatePointsWhere(predicate: (value: IPoint2d, index: number) => boolean) {
     const rv: IPoint2d[] = [];
     for (let i = 0; i < this.width; i++)
       for (let j = 0, e = { x: i, y: j }; j < this.height; j++, e = { x: i, y: j })

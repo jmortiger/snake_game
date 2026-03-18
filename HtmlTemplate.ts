@@ -43,10 +43,6 @@ export function template<T extends Node, T1 extends Node, T2 extends Node>(rende
     args.unshift(strings);
 
     // Concatenate the text, using comments as placeholders for already-instantiated `Node`s.
-    // for (i = 1, n = arguments.length; i < n; ++i) {
-    //   part = arguments[i];
-    // for (i = 1, n = strings.length; i < n; ++i) {
-    //   part = strings[i];
     for (i = 1, n = args.length; i < n; ++i) {
       part = args[i];
       if (part instanceof Node) {
@@ -79,18 +75,13 @@ export function template<T extends Node, T1 extends Node, T2 extends Node>(rende
     // Walk the rendered content to replace comment placeholders for already-instantiated `Node`s.
     if (++k > 0) {
       nodes = new Array(k);
-      // walker = document.createTreeWalker(root, NodeFilter.SHOW_COMMENT, null, false);
       walker = document.createTreeWalker(root, NodeFilter.SHOW_COMMENT, null);
       while (walker.nextNode()) {
         node = walker.currentNode;
-        if (/^o:/.test(node.nodeValue || "")) { // if (/^o:/.test(node.nodeValue)) {
+        if (/^o:/.test(node.nodeValue || "")) {
           nodes[+node.nodeValue!.slice(2)] = node;
         }
       }
-      // for (i = 0; i < k; ++i) {
-      //   if (node = nodes[i]) {
-      //   node.parentNode.replaceChild(parts[i], node);
-      // }
       for (i = 0, node = nodes[i]!; i < k; node = nodes[++i]!) {
         node?.parentNode?.replaceChild(parts[i]!, node);
       }

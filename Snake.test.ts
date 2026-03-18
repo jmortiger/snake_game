@@ -17,18 +17,6 @@ function iterate(
   }
 }
 
-test(
-  "Array.splice behaves as expected",
-  () => {
-    const aC = [0, 1, 2, 3];
-    const a2 = aC.slice();
-    expect(a2.splice(1, 1)).toEqual([1]);
-    expect(a2).toEqual([0, 2, 3]);
-    expect(a2.splice(1, 0, 1)).toBeEmpty();
-    expect(a2).toEqual([0, 1, 2, 3]);
-  },
-);
-
 describe("Snake.fromPreferences makes a snake", () => {
   test(
     "will error when requesting something too long",
@@ -65,81 +53,4 @@ describe("Snake.fromPreferences makes a snake", () => {
       );
     },
   );
-
-  /* test(
-    "with no repeated nodes",
-    () => {
-      const width = 10, height = 10;
-      for (let i = 2; i < width * height - 10; i++) {
-        expect(
-          Snake.fromPreferences(
-            {
-              startingLength: i,
-              wallBehavior: WallBehavior.endGame,
-              startingDirection: Direction.up,
-            },
-            RectInt.fromDimensionsAndMin(width, height, { x: 0, y: 0 }),
-          ),
-        ).toSatisfy(
-          s => s
-            .snakeNodesDebug
-            .every((e, i, a) => [...a].splice(i, 1).every(e1 => !e.equals(e1))),
-        );
-      }
-    },
-  ); */
-  test(
-    "with no repeated nodes",
-    () => {
-      const width = 10, height = 10;
-      // for (let i = 2; i < width * height - 10; i++) {
-      for (let i = 2; i < width * height; i += 10) {
-        const nodes = Snake.fromPreferences(
-          {
-            startingLength:    i,
-            wallBehavior:      WallBehavior.endGame,
-            startingDirection: Direction.up,
-          },
-          RectInt.fromDimensionsAndMin(width, height, { x: 0, y: 0 }),
-        ).snakeNodesDebug;
-        for (let j = 0; j < nodes.length; j++) {
-          const trim = [...nodes].splice(i, 1);
-          trim.forEach(e => expect(e).not.toSatisfy(e1 => (e1 as Point2d).equals(nodes[i])));
-        }
-        /* expect(
-          ,
-        ).not.toInclude(
-          s => s
-            .snakeNodesDebug
-            .every((e, i, a) => [...a].splice(i, 1).every(e1 => !e.equals(e1))),
-        ); */
-      }
-    },
-  );
-
-  // test(
-  //   "of the proper length",
-  //   () => {
-  //     const width = 10, height = 10;
-  //     for (let i = 2; i < width * height - 10; i++) {
-  //       expect(
-  //         Snake.fromPreferences(
-  //           {
-  //             startingLength: i,
-  //             wallBehavior: WallBehavior.endGame,
-  //             startingDirection: Direction.up,
-  //           },
-  //           RectInt.fromDimensionsAndMin(width, height, { x: 0, y: 0 }),
-  //         ),
-  //       ).toSatisfy(
-  //         s => {
-  //           let runningTotal = 0;
-  //           s.snakeNodesDebug.reduce(
-  //             (p, c, i, a) => p ? c.,
-  //           )
-  //         },
-  //       );
-  //     }
-  //   },
-  // );
 });

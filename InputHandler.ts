@@ -240,7 +240,6 @@ class InputHandler implements IInputHandler {
       a = InputAction.right;
     } else return;
     const after = structuredClone(this._keyState);
-    // actions?.forEach(a => event.fire({ action: a, state: after, priorState: prior }));
     event.fire({ action: a, state: after, priorState: prior });
   }
 
