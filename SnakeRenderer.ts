@@ -30,10 +30,11 @@ class SnakeRenderer {
 
   public readonly engine:  SnakeEngine;
   public readonly wrapper: CtxWrapper;
+  public get canvas() { return this.ctx.canvas; }
   public get outputSquareWidth() {
-    return this.ctx.canvas.clientWidth <= this.ctx.canvas.clientHeight
-      ? this.ctx.canvas.clientWidth
-      : this.ctx.canvas.clientHeight;
+    return this.canvas.width <= this.canvas.height
+      ? this.canvas.width
+      : this.canvas.height;
   }
 
   public get renderedCellWidth() {
@@ -48,12 +49,10 @@ class SnakeRenderer {
     return RectInt2d.fromDimensionsAndMin(this.playfieldRenderedWidth, this.playfieldRenderedWidth);
   }
 
-  public readonly ctx:           CanvasRenderingContext2D;
-  public readonly assetPromise?: Promise<SnakeImage[]>;
-
+  public readonly assetPromise?:        Promise<SnakeImage[]>;
   public readonly inputDisplayManager?: InputDisplay<HTMLElement>;
   public constructor(
-    public readonly canvas: HTMLCanvasElement,
+    public readonly ctx: CanvasRenderingContext2D,
     public readonly config: IEngineConfig = EngineConfig.defaultConfig,
     public readonly renderConfig: RenderConfig = SnakeRenderer.defaultConfig,
   ) {
@@ -74,7 +73,6 @@ class SnakeRenderer {
     } else {
       this.engine = new SnakeEngine(config);
     }
-    this.ctx = canvas.getContext("2d")!;
     this.wrapper = new CtxWrapper(this.ctx);
     this.assetPromise = renderConfig.assets
       ? SnakeImage.loadImages(...renderConfig.assets)

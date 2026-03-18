@@ -1,17 +1,24 @@
 import SnakeRenderer from "./SnakeRenderer";
 import { EngineConfig, type IEngineConfig } from "./Types";
 
-const canvas = document.createElement("canvas");
+const canvas = document.querySelector("canvas") ?? (() => {
+  const c = document.createElement("canvas");
+  document.body.prepend(c);
+  return c;
+})();
 canvas.width = 300;
 canvas.height = 300;
+const ctx = canvas.getContext("2d")!;
+if (!ctx) {
+  throw Error("Failed to retrieve canvas context.");
+}
 
 // canvas.style.imageRendering = "pixelated";
-document.body.prepend(canvas);
 const state = EngineConfig.toUI(EngineConfig.defaults, initialize);
 function initialize(cfg: IEngineConfig) {
-  const r = new SnakeRenderer(canvas, cfg);
+  const r = new SnakeRenderer(ctx, cfg);
 
-  canvas.getContext("2d")?.clearRect(0, 0, canvas.width, canvas.height);
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
   // Wait for assets to load before setting up the game
   r.initGame().then(() => {
     document.onkeyup = (e: KeyboardEvent) => {
