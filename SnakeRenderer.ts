@@ -230,10 +230,12 @@ class SnakeRenderer {
               ? "red"
               : (isSegment ? "blue" : "green") });
           }
-        } else if (this.engine.currPellets.find(e => e.equals({ x: i, y: j }))) {
+          // NOTE: Nullish check stops race condition(?) bug on state change
+        } else if (this.engine.currPellets.find(e => e?.equals({ x: i, y: j }))) {
           if (!SnakeImage.tryDrawImage(this.ctx, "pellet", offsetWidth, offsetHeight, { x: this.renderedCellWidth, y: this.renderedCellWidth }))
             this.wrapper.fillSquareFull(offsetWidth, offsetHeight, this.renderedCellWidth, { lineWidth: 2, fillStyle: "yellow" });
-        } else if (this.engine.currObstacles.find(e => e.equals({ x: i, y: j }))) {
+          // NOTE: Nullish check stops race condition(?) bug on state change
+        } else if (this.engine.currObstacles.find(e => e?.equals({ x: i, y: j }))) {
           if (!SnakeImage.tryDrawImage(this.ctx, "wall", offsetWidth, offsetHeight, { x: this.renderedCellWidth, y: this.renderedCellWidth }))
             this.wrapper.fillSquareFull(offsetWidth, offsetHeight, this.renderedCellWidth, { lineWidth: 2, fillStyle: "black" });
         }
