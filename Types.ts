@@ -287,6 +287,7 @@ class EngineConfig implements IEngineConfig {
   public static toUI(c: IEngineConfig, onParsed?: (cfg: IEngineConfig) => void): _CfgPromiseObjFull {
     const elem = html<HTMLFormElement>`
     <form id="snake-settings" style="display: inline-flex; flex-direction: column;">
+      <label>Starting Length: <input type=number value=${c.startingLength} name="startingLength" min=2 step=1 /></label>
       <label>Grid Width: <input type=number value=${c.gridWidth} name="gridWidth" /></label>
       <label>Grid Height: <input type=number value=${c.gridHeight} name="gridHeight" /></label>
       <label>Tick rate: <input type=number value=${c.millisecondsPerUpdate} name="millisecondsPerUpdate" /> milliseconds per update</label>
