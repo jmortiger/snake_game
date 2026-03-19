@@ -54,6 +54,7 @@ interface PelletEatenEvent extends GameStateEvent {
   pelletCoordinates: Point;
   newPellets?:       Point[];
   totalEaten:        number;
+  movesSinceLast:    number;
 }
 
 export {

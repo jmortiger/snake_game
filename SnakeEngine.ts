@@ -28,6 +28,7 @@ class SnakeEngine {
   private lastUpdateTimestamp = -1;
   private firstUpdateTimestamp = -1;
   private inGameTime = 0;
+  private movesSinceLastPellet = 0;
   // #endregion Game State
 
   private obstacles: Point[] = [];
@@ -106,6 +107,7 @@ class SnakeEngine {
     this._tickCount = this._pelletsEaten = 0;
     this.lastUpdateTimestamp = this.firstUpdateTimestamp = -1;
     this.inGameTime = 0;
+    this.movesSinceLastPellet = 0;
 
     const t = this.getValidSpawnLocations();
     this.initPointObjectArray(this.config.pelletConfig, this.pellets, t);
@@ -194,7 +196,9 @@ class SnakeEngine {
         pelletCoordinates: this.pellets.splice(eatenIndex, 1)[0]!,
         snakeLength:       this.snake.snakeLength,
         totalEaten:        ++this._pelletsEaten,
+        movesSinceLast:    this.movesSinceLastPellet,
       };
+      this.movesSinceLastPellet = 0;
       const emptySpaces = this.getValidSpawnLocations(),
             gameWon = emptySpaces.length < 1;
       // Then make the new one
@@ -206,6 +210,8 @@ class SnakeEngine {
       // Then fire the event
       this.onPelletEaten.fire(args);
       if (gameWon) this.onGameWon.fire({ engine: this });
+    } else {
+      this.movesSinceLastPellet++;
     }
   }
   // #endregion Updating
