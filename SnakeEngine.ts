@@ -5,7 +5,7 @@ import Snake from "./Snake";
 import { EngineConfig, randomIndex, type IEngineConfig, type IGridObjectConfig } from "./Types";
 import { DebugLevel } from "./DebugLevel";
 
-class SnakeEngine {
+export default class SnakeEngine {
   public static debugLevel = DebugLevel.LOG;
 
   // #region Events
@@ -31,9 +31,9 @@ class SnakeEngine {
   private movesSinceLastPellet = 0;
   // #endregion Game State
 
-  private obstacles: Point[] = [];
   private pellets:   Point[] = [];
   public get currPellets() { return [...this.pellets]; }
+  private obstacles: Point[] = [];
   public get currObstacles() { return [...this.obstacles]; }
   public getValidSpawnLocations() {
     const ret: Point[] = [];
@@ -215,6 +215,7 @@ class SnakeEngine {
   }
   // #endregion Updating
 }
+
 export {
   SnakeEngine
 };
