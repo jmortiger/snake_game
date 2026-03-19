@@ -33,8 +33,10 @@ class DebugLevel {
   }
   // #endregion Parameter Serialization
 
+  public eval(level: DebugLevel) { return this.index >= level.index && this.index !== 0; }
+
   public print(level: DebugLevel, ...data: any[]) { // eslint-disable-line @typescript-eslint/no-explicit-any
-    if (this.index >= level.index) level._print(...DebugLevel.handleParams(data));
+    if (this.eval(level)) level._print(...DebugLevel.handleParams(data));
   }
 
   public do<T, U>(
@@ -42,7 +44,7 @@ class DebugLevel {
     cb: (printMethod: (...data: any[]) => void) => T, // eslint-disable-line @typescript-eslint/no-explicit-any
     or?: (printMethod: (...data: any[]) => void) => U, // eslint-disable-line @typescript-eslint/no-explicit-any
   ) {
-    return (this.index >= level.index && this.index !== 0)
+    return this.eval(level)
       ? cb(level._print)
       : or ? or(level._print) : undefined;
   }
@@ -52,7 +54,7 @@ class DebugLevel {
    * @param level
    */
   public debugger(level: DebugLevel = DebugLevel.DEBUG) {
-    if (this.index >= level.index && this.index !== 0) debugger; // eslint-disable-line no-debugger
+    if (this.eval(level)) debugger; // eslint-disable-line no-debugger
   }
 
   /**
@@ -60,7 +62,7 @@ class DebugLevel {
    * @param level
    */
   public group(level: DebugLevel, ...data: any[]) { // eslint-disable-line @typescript-eslint/no-explicit-any
-    if (this.index >= level.index && this.index !== 0) console.group(...DebugLevel.handleParams(data));
+    if (this.eval(level)) console.group(...DebugLevel.handleParams(data));
   }
 
   /**
@@ -68,7 +70,7 @@ class DebugLevel {
    * @param level
    */
   public groupEnd(level: DebugLevel) {
-    if (this.index >= level.index && this.index !== 0) console.groupEnd();
+    if (this.eval(level)) console.groupEnd();
   }
 
   public static tableFromPointsAndPlayfield(points: IPoint[], playfield: RectInt, asIndex = true) {
