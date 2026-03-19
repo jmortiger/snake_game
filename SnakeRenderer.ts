@@ -10,6 +10,7 @@ interface RenderConfig {
   get assets(): ImageParams[] | undefined;
   /** Rotate a border asset, or just draw a manual border? */
   get rotateBorders(): boolean | undefined;
+  get makeOverlay(): boolean | undefined;
 };
 
 class SnakeRenderer {
@@ -26,6 +27,7 @@ class SnakeRenderer {
       { identifier: "background", url: "assets/scale.svg" },
     ],
     rotateBorders: true,
+    makeOverlay:   false,
   };
 
   public readonly engine:  SnakeEngine;
@@ -173,9 +175,19 @@ class SnakeRenderer {
   }
   // #endregion Rotation Helpers
 
+  private get bgFillColor() {
+    if (this.engine.isGameOver) {
+      if (this.engine.isGameWon) {
+        return "rgba(0, 255, 0, .5)";
+      }
+      return "rgba(255, 0, 0, .5)";
+    }
+    return "rgb(50, 88, 146)";
+  }
+
   public draw(args: GameStateEvent) {
     // Fill with base background color first
-    this.wrapper.fillSquareFull(0, 0, this.outputSquareWidth, { lineWidth: 2, fillStyle: this.engine.isGameOver ? "rgba(255, 0, 0, .5)" : "#325892" });
+    this.wrapper.fillSquareFull(0, 0, this.outputSquareWidth, { lineWidth: 2, fillStyle: this.bgFillColor });
 
     // Draw repeating background pattern if available
     const backgroundImg = SnakeImage.getImage("background");
@@ -254,7 +266,7 @@ class SnakeRenderer {
         // #endregion Render foreground elements
       }
     }
-    if (this.engine.isGameOver) this.wrapper.fillSquareFull(0, 0, this.outputSquareWidth, { lineWidth: 2, fillStyle: "rgba(255, 0, 0, .5)" });
+    if (this.renderConfig.makeOverlay && this.engine.isGameOver) this.wrapper.fillSquareFull(0, 0, this.outputSquareWidth, { lineWidth: 2, fillStyle: this.bgFillColor });
     if (!this.renderConfig.rotateBorders)
       this.wrapper.strokeSquareFull(0, 0, this.outputSquareWidth, { lineWidth: 2, strokeStyle: "black" });
     this.wrapper.autoSave = this.wrapper.autoRestore = false;
