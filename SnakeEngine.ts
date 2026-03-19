@@ -1,4 +1,4 @@
-import { SnakeEvent, type GameOverEvent, type GameStateEvent, type PelletEatenEvent, type TickEvent } from "./Events";
+import { SnakeEvent, type GameLostEvent, type GameOverEvent, type GameStateEvent, type PelletEatenEvent, type TickEvent } from "./Events";
 import { InputHandler, type IInputHandler } from "./InputHandler";
 import { Direction, Point, RectInt as Rect } from "./Point2d";
 import Snake from "./Snake";
@@ -10,6 +10,7 @@ export default class SnakeEngine {
 
   // #region Events
   public readonly onGameOver = new SnakeEvent<GameOverEvent>();
+  public readonly onGameLost = new SnakeEvent<GameLostEvent>();
   public readonly onGameWon = new SnakeEvent<GameStateEvent>();
   public readonly onGamePaused = new SnakeEvent<GameStateEvent>();
   public readonly onGameResumed = new SnakeEvent<GameStateEvent>();
@@ -21,6 +22,8 @@ export default class SnakeEngine {
   // #region Game State
   private _isGameOver = false;
   public get isGameOver(): boolean { return this._isGameOver; }
+  private _isGameWon = false;
+  public get isGameWon(): boolean { return this._isGameWon; }
   private _isGamePaused = true;
   public get isGamePaused(): boolean { return this._isGamePaused; }
   private _tickCount = 0;
@@ -102,7 +105,7 @@ export default class SnakeEngine {
     this._snake = Snake.fromPreferences(this.config, this.playfieldRect);
 
     this.timerId = undefined;
-    this._isGameOver = false;
+    this._isGameOver = this._isGameWon = false;
     this._isGamePaused = true;
     this._tickCount = this._pelletsEaten = 0;
     this.lastUpdateTimestamp = this.firstUpdateTimestamp = -1;
@@ -112,38 +115,70 @@ export default class SnakeEngine {
     const t = this.getValidSpawnLocations();
     this.initPointObjectArray(this.config.pelletConfig, this.pellets, t);
     this.initPointObjectArray(this.config.obstacleConfig, this.obstacles, t);
-    this.onGameOver.add(_ => this.endGame());
-    this.onGameWon.add(_ => this.endGame());
   }
 
   // #region Tick Management
-  private timerId?: number;
-  startGame() { this.resumeGame(); }
+  private get onManualUpdateMode() { return SnakeEngine.debugLevel.eval(DebugLevel.DEBUG); }
 
-  resumeGame() {
+  private timerId?: number;
+  public startGame() { this.resumeGame(); }
+
+  public resumeGame() {
     if (!this._isGamePaused && this.timerId) return;
     this._isGamePaused = false;
-    SnakeEngine.debugLevel.do(
-      DebugLevel.DEBUG,
-      () => document.onkeyup = e => this.playOnSpaceBar(e),
-      () => this.timerId = window.setInterval(() => this.update(), this.config.millisecondsPerUpdate),
-    );
+    // e => this.playOnSpaceBar(e);
+    // this.playOnSpaceBar.bind(this);
+    if (this.onManualUpdateMode) document.onkeyup = this.bound_playOnSpaceBar;
+    else this.timerId = window.setInterval(() => this.update(), this.config.millisecondsPerUpdate);
     this.lastUpdateTimestamp = -1;
     this.onGameResumed.fire({ engine: this });
   }
 
-  playOnSpaceBar(e: KeyboardEvent) { if (e.key === " ") this.update(); }
+  private playOnSpaceBar(e: KeyboardEvent) { if (e.key === " ") this.update(); }
+  private bound_playOnSpaceBar = this.playOnSpaceBar.bind(this);
 
   public pauseGame() {
-    if (!this.timerId) return;
-    window.clearInterval(this.timerId);
-    this.timerId = undefined;
+    if (!this.stopUpdating()) return;
 
     this._isGamePaused = true;
     this.onGamePaused.fire({ engine: this });
   }
 
-  endGame() { window.clearInterval(this.timerId); }
+  private stopUpdating() {
+    if (!this.timerId && document.onkeyup !== this.playOnSpaceBar && document.onkeyup !== this.bound_playOnSpaceBar) return false;
+    if (!this.onManualUpdateMode) {
+      window.clearInterval(this.timerId);
+      this.timerId = undefined;
+    } else {
+      document.onkeyup = null;
+    }
+    return true;
+  }
+
+  private endGame(reason?: "won" | "other" | Point[] | Point) {
+    this.stopUpdating();
+    this._isGameOver = true;
+    if (!reason) return;
+    let args: GameOverEvent | GameLostEvent = { engine: this, reason: typeof reason === "string" ? reason : "lost" };
+    switch (reason) {
+    case "other":
+      break;
+
+    case "won":
+      this._isGameWon = true;
+      this.onGameWon.fire(args);
+      break;
+
+    default:
+      args = {
+        ...args,
+        collision: reason,
+      };
+      this.onGameLost.fire(args);
+      break;
+    }
+    this.onGameOver.fire(args);
+  }
   // #endregion Tick Management
 
   // #region Updating
@@ -186,8 +221,7 @@ export default class SnakeEngine {
     const eatenIndex = this.pellets.findIndex(e => e.equals(projectedPosition));
     const intersection = this.obstacles.find(e => e.equals(projectedPosition)) ?? this.snake.advance(d, eatenIndex > -1);
     if (intersection) {
-      this._isGameOver = true;
-      this.onGameOver.fire({ engine: this, collision: intersection });
+      this.endGame(intersection);
     } else if (eatenIndex > -1) {
       // Remove the pellet
       const args: PelletEatenEvent = {
@@ -208,7 +242,7 @@ export default class SnakeEngine {
       }
       // Then fire the event
       this.onPelletEaten.fire(args);
-      if (gameWon) this.onGameWon.fire({ engine: this });
+      if (gameWon) this.endGame("won");
     } else {
       this.movesSinceLastPellet++;
     }

@@ -3,7 +3,11 @@ import type { SnakeEngine } from "./SnakeEngine";
 
 type SnakeDelegate<EventArgs> = (args: EventArgs) => void;
 class SnakeEvent<A> {
-  constructor(private readonly listeners: SnakeDelegate<A>[] = []) {}
+  constructor(
+    private readonly listeners: SnakeDelegate<A>[] = [],
+    private readonly onAdd?: (cb: SnakeDelegate<A>, event: SnakeEvent<A>) => void,
+    private readonly onRemove?: (cb: SnakeDelegate<A>, event: SnakeEvent<A>) => void,
+  ) {}
 
   public fire(args: A) {
     this.listeners.forEach(f => f(args));
@@ -12,12 +16,14 @@ class SnakeEvent<A> {
   /** @todo Add `tag` to distinguish who added what for resetting */
   public add(func: SnakeDelegate<A>) {
     this.listeners.push(func);
+    if (this.onAdd) this.onAdd(func, this);
   }
 
   public remove(func: SnakeDelegate<A>) {
     const i = this.listeners.indexOf(func);
     if (i < 0) return false;
-    this.listeners.splice(i, 1);
+    const removed = this.listeners.splice(i, 1)[0]!;
+    if (this.onRemove) this.onRemove(removed, this);
     return true;
   }
 
@@ -29,13 +35,16 @@ class SnakeEvent<A> {
   public removeEvery(func: SnakeDelegate<A>) {
     let count = 0;
     for (let i = this.listeners.indexOf(func); i >= 0; i = this.listeners.indexOf(func), count++) {
-      this.listeners.splice(i, 1);
+      const removed = this.listeners.splice(i, 1)[0]!;
+      if (this.onRemove) this.onRemove(removed, this);
     }
     return count;
   }
 
   public clear() {
-    return this.listeners.splice(0);
+    const cbs = this.listeners.splice(0);
+    if (this.onRemove) cbs.forEach(e => this.onRemove!(e, this));
+    return cbs;
   }
 }
 
@@ -46,6 +55,9 @@ interface TickEvent extends GameStateEvent {
   tickCount: number;
 }
 interface GameOverEvent extends GameStateEvent {
+  reason: "lost" | "won" | "other";
+}
+interface GameLostEvent extends GameOverEvent {
   collision: Point[] | Point;
 }
 interface PelletEatenEvent extends GameStateEvent {
@@ -64,6 +76,7 @@ export type {
   SnakeDelegate,
   GameStateEvent,
   GameOverEvent,
+  GameLostEvent,
   PelletEatenEvent,
   TickEvent,
 };
