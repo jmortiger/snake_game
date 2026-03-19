@@ -81,10 +81,12 @@ class SnakeRenderer {
       : undefined;
   }
 
+  private _wasInitialized = false;
   public async initGame() {
     // Wait for all assets to load before initializing the game
     await this.assetPromise;
-    this.engine.initGame();
+    // Only do this if we're reinitializing.
+    if (this._wasInitialized) this.engine.initGame();
     this.engine.onTickCompleted.add(e => this.draw(e));
     this.engine.onGameLost.add(_e => this.endGame(false));
     this.engine.onGameWon.add(_e => this.endGame(true));
@@ -98,6 +100,7 @@ class SnakeRenderer {
         }
       }
     });
+    this._wasInitialized = true;
   }
 
   public startGame() {
