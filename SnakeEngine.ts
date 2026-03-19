@@ -4,6 +4,7 @@ import { Direction, Point, RectInt as Rect } from "./Point2d";
 import Snake from "./Snake";
 import { EngineConfig, randomIndex, type IEngineConfig, type IGridObjectConfig } from "./Types";
 import { DebugLevel } from "./DebugLevel";
+import EngineDriver from "./EngineDriver";
 
 export default class SnakeEngine {
   public static debugLevel = DebugLevel.LOG;
@@ -24,8 +25,6 @@ export default class SnakeEngine {
   public get isGameOver(): boolean { return this._isGameOver; }
   private _isGameWon = false;
   public get isGameWon(): boolean { return this._isGameWon; }
-  private _isGamePaused = true;
-  public get isGamePaused(): boolean { return this._isGamePaused; }
   private _tickCount = 0;
   private _pelletsEaten = 0;
   private lastUpdateTimestamp = -1;
@@ -104,9 +103,7 @@ export default class SnakeEngine {
   public initGame() {
     this._snake = Snake.fromPreferences(this.config, this.playfieldRect);
 
-    this.timerId = undefined;
     this._isGameOver = this._isGameWon = false;
-    this._isGamePaused = true;
     this._tickCount = this._pelletsEaten = 0;
     this.lastUpdateTimestamp = this.firstUpdateTimestamp = -1;
     this.inGameTime = 0;
@@ -117,46 +114,24 @@ export default class SnakeEngine {
     this.initPointObjectArray(this.config.obstacleConfig, this.obstacles, t);
   }
 
-  // #region Tick Management
-  private get onManualUpdateMode() { return SnakeEngine.debugLevel.eval(DebugLevel.DEBUG); }
+  // #region Game State Management
+  public get isGamePaused(): boolean { return !this.engineDriver.isDriving; }
+  public readonly engineDriver = new EngineDriver(this);
 
-  private timerId?: number;
   public startGame() { this.resumeGame(); }
 
   public resumeGame() {
-    if (!this.isGamePaused && this.timerId) return;
-    this._isGamePaused = false;
-    // e => this.playOnSpaceBar(e);
-    // this.playOnSpaceBar.bind(this);
-    if (this.onManualUpdateMode) document.onkeyup = this.bound_playOnSpaceBar;
-    else this.timerId = window.setInterval(() => this.update(), this.config.millisecondsPerUpdate);
+    if (!this.engineDriver.startDriving()) return;
     this.lastUpdateTimestamp = -1;
     this.onGameResumed.fire({ engine: this });
   }
 
-  private playOnSpaceBar(e: KeyboardEvent) { if (e.key === " ") this.update(); }
-  private bound_playOnSpaceBar = this.playOnSpaceBar.bind(this);
-
   public pauseGame() {
-    if (!this.stopUpdating()) return;
-
-    this._isGamePaused = true;
-    this.onGamePaused.fire({ engine: this });
-  }
-
-  private stopUpdating() {
-    if (!this.timerId && document.onkeyup !== this.playOnSpaceBar && document.onkeyup !== this.bound_playOnSpaceBar) return false;
-    if (!this.onManualUpdateMode) {
-      window.clearInterval(this.timerId);
-      this.timerId = undefined;
-    } else {
-      document.onkeyup = null;
-    }
-    return true;
+    if (this.engineDriver.stopDriving()) this.onGamePaused.fire({ engine: this });
   }
 
   private endGame(reason?: "won" | "other" | Point[] | Point) {
-    this.stopUpdating();
+    this.engineDriver.stopDriving();
     this._isGameOver = true;
     if (!reason) return;
     let args: GameOverEvent | GameLostEvent = { engine: this, reason: typeof reason === "string" ? reason : "lost" };
@@ -179,7 +154,7 @@ export default class SnakeEngine {
     }
     this.onGameOver.fire(args);
   }
-  // #endregion Tick Management
+  // #endregion Game State Management
 
   // #region Updating
   public update() {
