@@ -46,7 +46,7 @@ interface TickEvent extends GameStateEvent {
   tickCount: number;
 }
 interface GameOverEvent extends GameStateEvent {
-  collision: Point[];
+  collision: Point[] | Point;
 }
 interface PelletEatenEvent extends GameStateEvent {
   /** The length of the snake after the pellet has been eaten. */

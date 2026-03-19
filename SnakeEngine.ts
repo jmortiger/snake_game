@@ -183,9 +183,8 @@ class SnakeEngine {
    */
   public advance(d = this.currentDirection) {
     const projectedPosition = Point.add(this.snake.head, d);
-    // Which pellet was eaten, if any.
     const eatenIndex = this.pellets.findIndex(e => e.equals(projectedPosition));
-    const intersection = this.snake.advance(d, eatenIndex > -1);
+    const intersection = this.obstacles.find(e => e.equals(projectedPosition)) ?? this.snake.advance(d, eatenIndex > -1);
     if (intersection) {
       this._isGameOver = true;
       this.onGameOver.fire({ engine: this, collision: intersection });
