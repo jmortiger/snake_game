@@ -124,7 +124,7 @@ export default class SnakeEngine {
   public startGame() { this.resumeGame(); }
 
   public resumeGame() {
-    if (!this._isGamePaused && this.timerId) return;
+    if (!this.isGamePaused && this.timerId) return;
     this._isGamePaused = false;
     // e => this.playOnSpaceBar(e);
     // this.playOnSpaceBar.bind(this);
@@ -216,7 +216,7 @@ export default class SnakeEngine {
    * @param d The direction the snake is moving in.
    * @returns The line segment of collision if the snake collided with itself, `undefined` if it stayed alive.
    */
-  public advance(d = this.currentDirection) {
+  private advance(d = this.currentDirection) {
     const projectedPosition = Point.add(this.snake.head, d);
     const eatenIndex = this.pellets.findIndex(e => e.equals(projectedPosition));
     const intersection = this.obstacles.find(e => e.equals(projectedPosition)) ?? this.snake.advance(d, eatenIndex > -1);
