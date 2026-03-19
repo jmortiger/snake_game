@@ -82,7 +82,7 @@ export default class SnakeEngine {
     if (typeof config.startingObjs === "number") {
       const max = Math.min(validPoints.length, config.startingObjs);
       for (let i = 0; i < max; i++) {
-        const index = Math.round(Math.random() * validPoints.length);
+        const index = Math.floor(Math.random() * validPoints.length);
         objArray.push(validPoints[index]!);
         validPoints.splice(index, 1);
       }
