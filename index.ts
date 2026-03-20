@@ -1,3 +1,4 @@
+import type SnakeEngine from "./SnakeEngine";
 import SnakeRenderer from "./SnakeRenderer";
 import { EngineConfig, type IEngineConfig } from "./Types";
 
@@ -21,8 +22,12 @@ if (!ctx) {
 
 const state = EngineConfig.toUI(EngineConfig.defaults, initialize);
 // ctr.appendChild(state.form);
+let lastEngineStats: HTMLElement | undefined;
 function initialize(cfg: IEngineConfig) {
+  if (lastEngineStats) lastEngineStats.remove();
   const r = new SnakeRenderer(ctx, cfg);
+  lastEngineStats = r.engine.renderStats();
+  canvas.insertAdjacentElement("afterend", lastEngineStats);
 
   ctx.clearRect(0, 0, canvas.width, canvas.height);
   // Wait for assets to load before setting up the game

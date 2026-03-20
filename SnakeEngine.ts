@@ -5,8 +5,11 @@ import Snake from "./Snake";
 import { EngineConfig, randomIndex, type IEngineConfig, type IGridObjectConfig } from "./Types";
 import { DebugLevel } from "./DebugLevel";
 import EngineDriver from "./EngineDriver";
+import { html } from "./HtmlTemplate";
+import type UiStat from "./UiStat";
+import { bindMappedElementsToEvent } from "./UiStat";
 
-export default class SnakeEngine {
+export default class SnakeEngine implements UiStat<HTMLParagraphElement> {
   public static debugLevel = DebugLevel.LOG;
 
   // #region Events
@@ -132,6 +135,19 @@ export default class SnakeEngine {
     this.onGamePaused.fire({ engine: this });
   }
 
+  transferToNewInstance(other: SnakeEngine) {
+    other.onGameLost.add(...this.onGameLost.clear());
+    other.onGameOver.add(...this.onGameOver.clear());
+    other.onGamePaused.add(...this.onGamePaused.clear());
+    other.onGameResumed.add(...this.onGameResumed.clear());
+    other.onGameWon.add(...this.onGameWon.clear());
+    other.onPelletEaten.add(...this.onPelletEaten.clear());
+    other.onTickCompleted.add(...this.onTickCompleted.clear());
+    other.onTickStarted.add(...this.onTickStarted.clear());
+    // TODO: End updates
+    // TODO: Transfer remaining state.
+  }
+
   private endGame(reason?: "won" | "other" | Point[] | Point) {
     this.engineDriver.stopDriving();
     this._isGameOver = true;
@@ -235,6 +251,26 @@ export default class SnakeEngine {
     }
   }
   // #endregion Updating
+
+  public renderStats() {
+    const initTickArgs: TickEvent = { engine: this, tickCount: this._tickCount, inGameTime: this.inGameTime, timeOverall: this.currentOverallTime };
+    const elements = bindMappedElementsToEvent(
+      this.onTickCompleted,
+      e => ({
+        tickCount:   html<HTMLParagraphElement>`<p>Turns Completed: ${e.tickCount}</b></p>`,
+        inGameTime:  html<HTMLParagraphElement>`<p>In Game Time: ${e.inGameTime}</b></p>`,
+        timeOverall: html<HTMLParagraphElement>`<p>Overall Time: ${e.timeOverall}</b></p>`,
+      }),
+      initTickArgs,
+    );
+    return html`
+    <p id="engine-stats">
+      ${elements.tickCount}
+      ${elements.inGameTime}
+      ${elements.timeOverall}
+    </p>
+    ` as HTMLParagraphElement;
+  }
 }
 
 export {
