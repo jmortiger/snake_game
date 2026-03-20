@@ -207,17 +207,17 @@ export default class SnakeEngine {
         movesSinceLast:    this.movesSinceLastPellet,
       };
       this.movesSinceLastPellet = 0;
-      const emptySpaces = this.getValidSpawnLocations(),
-            gameWon = emptySpaces.length < 1;
-      // Then make the new one
-      if (!gameWon && this.pellets.length < this.config.pelletConfig.maxObjs) {
+      const emptySpaces = this.getValidSpawnLocations();
+      if (emptySpaces.length < 1) {
+        this.onPelletEaten.fire(args);
+        this.endGame("won");
+        return;
+      } else if (this.pellets.length < this.config.pelletConfig.maxObjs) {
         const newPellet = emptySpaces[randomIndex(emptySpaces)]!;
         this.pellets.push(newPellet);
         args.newPellets = [newPellet];
       }
-      // Then fire the event
       this.onPelletEaten.fire(args);
-      if (gameWon) this.endGame("won");
     } else {
       this.movesSinceLastPellet++;
     }
