@@ -54,7 +54,9 @@ interface GameStateEvent {
   engine: SnakeEngine;
 }
 interface TickEvent extends GameStateEvent {
-  tickCount: number;
+  tickCount:   number;
+  inGameTime:  number;
+  timeOverall: number;
 }
 interface GameOverEvent extends GameStateEvent {
   reason: "lost" | "won" | "other";

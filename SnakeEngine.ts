@@ -25,11 +25,7 @@ export default class SnakeEngine {
   public get isGameOver(): boolean { return this._isGameOver; }
   private _isGameWon = false;
   public get isGameWon(): boolean { return this._isGameWon; }
-  private _tickCount = 0;
   private _pelletsEaten = 0;
-  private lastUpdateTimestamp = -1;
-  private firstUpdateTimestamp = -1;
-  private inGameTime = 0;
   private movesSinceLastPellet = 0;
   // #endregion Game State
 
@@ -122,12 +118,18 @@ export default class SnakeEngine {
 
   public resumeGame() {
     if (!this.engineDriver.startDriving()) return;
-    this.lastUpdateTimestamp = -1;
+
+    this.lastUpdateTimestamp = performance.now();
+    SnakeEngine.debugLevel.print(DebugLevel.LOG, "Unpaused at %s", this.lastUpdateTimestamp);
     this.onGameResumed.fire({ engine: this });
   }
 
   public pauseGame() {
-    if (this.engineDriver.stopDriving()) this.onGamePaused.fire({ engine: this });
+    if (!this.engineDriver.stopDriving()) return;
+
+    this.inGameTime += this.updateLastTimestamp();
+    SnakeEngine.debugLevel.print(DebugLevel.LOG, "Paused at %s", this.lastUpdateTimestamp);
+    this.onGamePaused.fire({ engine: this });
   }
 
   private endGame(reason?: "won" | "other" | Point[] | Point) {
@@ -157,20 +159,30 @@ export default class SnakeEngine {
   // #endregion Game State Management
 
   // #region Updating
+  private _tickCount = 0;
+  private penultimateUpdateTimestamp = -1;
+  private lastUpdateTimestamp = -1;
+  private firstUpdateTimestamp = -1;
+  private inGameTime = 0;
+  private get currentOverallTime() { return performance.now() - this.firstUpdateTimestamp; }
+  /**
+   * Updates `lastUpdateTimestamp`.
+   * @param timestamp The reference time to update to.
+   * @returns The delta between the prior & current values of `lastUpdateTimestamp`.
+   */
+  private updateLastTimestamp(timestamp = performance.now()) { return -this.lastUpdateTimestamp + (this.lastUpdateTimestamp = timestamp); }
   public update() {
     if (this.lastUpdateTimestamp < 0) {
       if (this.firstUpdateTimestamp < 0) {
         this.firstUpdateTimestamp = this.lastUpdateTimestamp = performance.now();
         SnakeEngine.debugLevel.print(DebugLevel.LOG, "First update at %s", this.lastUpdateTimestamp);
-      } else {
-        this.lastUpdateTimestamp = performance.now();
-        SnakeEngine.debugLevel.print(DebugLevel.LOG, "Unpaused at %s", this.lastUpdateTimestamp);
       }
-    } else {
-      const prior = this.lastUpdateTimestamp, deltaTime = (this.lastUpdateTimestamp = performance.now()) - prior;
-      SnakeEngine.debugLevel.print(DebugLevel.INFO, "Delta: %s", deltaTime);
     }
-    this.onTickStarted.fire({ engine: this, tickCount: ++this._tickCount });
+    const deltaTime = this.updateLastTimestamp();
+    this.inGameTime += deltaTime;
+    SnakeEngine.debugLevel.print(DebugLevel.INFO, "Delta: %s; time in game: %s", deltaTime, this.inGameTime);
+    const args: TickEvent = { engine: this, tickCount: ++this._tickCount, inGameTime: this.inGameTime, timeOverall: this.currentOverallTime };
+    this.onTickStarted.fire(args);
     // 1. Inputs
     const keys = this.inputHandler.getKeysDown();
     this.inputHandler.resetState();
@@ -183,7 +195,7 @@ export default class SnakeEngine {
     // 2. Update
     this.advance(d);
     // 3. Fire event
-    this.onTickCompleted.fire({ engine: this, tickCount: this._tickCount });
+    this.onTickCompleted.fire({ ...args, timeOverall: this.currentOverallTime });
   }
 
   /**
