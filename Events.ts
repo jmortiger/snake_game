@@ -14,9 +14,11 @@ class SnakeEvent<A> {
   }
 
   /** @todo Add `tag` to distinguish who added what for resetting */
-  public add(func: SnakeDelegate<A>) {
-    this.listeners.push(func);
-    if (this.onAdd) this.onAdd(func, this);
+  public add(...funcs: SnakeDelegate<A>[]) {
+    for (const func of funcs) {
+      this.listeners.push(func);
+      if (this.onAdd) this.onAdd(func, this);
+    }
   }
 
   public remove(func: SnakeDelegate<A>) {
