@@ -35,6 +35,9 @@ class InputDisplay<T extends HTMLElement> implements IInputDisplay<T> {
     inputHandler.inputDown.add(e => this.dispatchInputDown(e));
     inputHandler.inputUp.add(e => this.dispatchInputUp(e));
     inputHandler.keyStateChanged.add(e => this.onKeyStateChange(e));
+    // Stop resizing on first input.
+    const t = { up: false, down: false, left: false, right: false };
+    this.onKeyStateChange({ priorState: t, state: t });
   }
 
   public static fromTouchInputHandler<T extends HTMLElement>(
@@ -107,11 +110,13 @@ class InputDisplay<T extends HTMLElement> implements IInputDisplay<T> {
     this.defaultBorder(args);
   }
 
+  public setBorderStyle = "4px solid rgba(0, 255, 0, 1)";
+  public borderStyle = "4px solid rgba(0,0,0,0)";
   private defaultBorder(args: InputEventArgs | StateEventArgs) {
-    this.up.style.border = args.state.up ? "4px solid rgba(0, 255, 0, 1)" : "";
-    this.down.style.border = args.state.down ? "4px solid rgba(0, 255, 0, 1)" : "";
-    this.left.style.border = args.state.left ? "4px solid rgba(0, 255, 0, 1)" : "";
-    this.right.style.border = args.state.right ? "4px solid rgba(0, 255, 0, 1)" : "";
+    this.up.style.border = args.state.up ? this.setBorderStyle : this.borderStyle;
+    this.down.style.border = args.state.down ? this.setBorderStyle : this.borderStyle;
+    this.left.style.border = args.state.left ? this.setBorderStyle : this.borderStyle;
+    this.right.style.border = args.state.right ? this.setBorderStyle : this.borderStyle;
   }
 }
 
