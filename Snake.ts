@@ -297,6 +297,14 @@ class Snake {
     assignNewHead();
     Snake.DEBUG_LEVEL.groupEnd(INFO);
   }
+
+  public findProjectedHeadPosition(d: Direction, playfield?: RectInt) {
+    let projectedPosition = Point.add(this.head, d);
+    if (this.config.wallBehavior === WallBehavior.wrap) {
+      projectedPosition = (playfield || this.playfield).wrap(projectedPosition);
+    }
+    return projectedPosition;
+  }
 }
 
 export default Snake;

@@ -192,7 +192,7 @@ export default class SnakeEngine {
    * @returns The line segment of collision if the snake collided with itself, `undefined` if it stayed alive.
    */
   private advance(d = this.currentDirection) {
-    const projectedPosition = Point.add(this.snake.head, d);
+    const projectedPosition = this.snake.findProjectedHeadPosition(d, this.playfieldRect);
     const eatenIndex = this.pellets.findIndex(e => e.equals(projectedPosition));
     const intersection = this.obstacles.find(e => e.equals(projectedPosition)) ?? this.snake.advance(d, eatenIndex > -1);
     if (intersection) {
