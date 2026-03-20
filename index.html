@@ -12,14 +12,12 @@
     #touch-container {
       display: grid;
       grid-template: 1fr 1fr 1fr / 1fr 1fr 1fr;
-      width: 50vw;
-      height: 50vh;
       justify-content: space-evenly;
       align-content: space-evenly;
+      align-items: stretch;
+      justify-items: stretch;
       & * {
         box-sizing: border-box;
-        width: calc(50vw / 3);
-        height: calc(50vh / 3);
         text-align: center;
       }
     }
@@ -43,11 +41,12 @@
 </head>
 
 <body>
+  <!-- <canvas></canvas> -->
   <div id="touch-container">
-    <span id="up">UP</span>
-    <span id="left">left</span>
-    <span id="down">down</span>
-    <span id="right">right</span>
+    <span id="up">▲</span>
+    <span id="left">◀</span>
+    <span id="down">▼</span>
+    <span id="right">▶</span>
   </div>
 </body>
 

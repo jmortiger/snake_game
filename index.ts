@@ -6,12 +6,12 @@ const canvas = document.querySelector("canvas") ?? (() => {
   document.body.prepend(c);
   return c;
 })();
-const ctr = document.createElement("div");
+/* const ctr = document.createElement("div");
 ctr.style.display = "flex";
 ctr.style.flexFlow = "row nowrap";
 ctr.style.justifyContent = "start";
 canvas.replaceWith(ctr);
-ctr.appendChild(canvas);
+ctr.appendChild(canvas); */
 canvas.width = 300;
 canvas.height = 300;
 const ctx = canvas.getContext("2d")!;
@@ -20,7 +20,7 @@ if (!ctx) {
 }
 
 const state = EngineConfig.toUI(EngineConfig.defaults, initialize);
-ctr.appendChild(state.form);
+// ctr.appendChild(state.form);
 function initialize(cfg: IEngineConfig) {
   const r = new SnakeRenderer(ctx, cfg);
 
@@ -38,5 +38,6 @@ function initialize(cfg: IEngineConfig) {
     console.error("Failed to load game assets:", error);
   });
 }
-canvas.insertAdjacentElement("afterend", state.form);
+// canvas.insertAdjacentElement("afterend", state.form);
+canvas.parentElement!.appendChild(state.form);
 initialize(state.defaults);
