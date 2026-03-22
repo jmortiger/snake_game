@@ -3,6 +3,7 @@
   "module": "index.ts",
   "type": "module",
   "private": true,
+  "version": "1.0.0",
   "devDependencies": {
     "@eslint/js": "^9.39.2",
     "@stylistic/eslint-plugin": "^5.6.1",
