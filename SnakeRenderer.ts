@@ -18,9 +18,9 @@ class SnakeRenderer {
   private get _dbgLvl() { return SnakeRenderer.DEBUG_LEVEL; }
   public static readonly defaultConfig: RenderConfig = {
     assets: [
-      { identifier: "head", url: "assets/snakeHead.png" },
-      { identifier: "body", url: "assets/snakeBody.png" },
-      { identifier: "pellet", url: "assets/pellet.png" },
+      { identifier: "head", url: "assets/head.svg" },
+      { identifier: "body", url: "assets/body.svg" },
+      { identifier: "pellet", url: "assets/pelletCentered.svg" },
       { identifier: "bgTile", url: "assets/bgTile.png" },
       { identifier: "corner", url: "assets/bgCornerTopLeft.png" },
       { identifier: "border", url: "assets/bgBorderLeft.png" },
