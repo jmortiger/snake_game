@@ -157,7 +157,14 @@ class InputHandler implements IInputHandler {
   readonly keyStateChanged = new SnakeEvent<StateEventArgs>();
   readonly inputDown = new SnakeEvent<InputEventArgs>();
   readonly inputUp = new SnakeEvent<InputEventArgs>();
-  constructor() { this.initDefaultInputs(); }
+  watchGlobal = true;
+  constructor(
+    public readonly watchedElement: HTMLElement | undefined = undefined,
+  ) {
+    if (watchedElement && (!watchedElement.isContentEditable || typeof(watchedElement.tabIndex) !== "number" || watchedElement.tabIndex === -1))
+      watchedElement.tabIndex = 0;
+    this.initDefaultInputs();
+  }
 
   protected setInputState(i: InputAction, value = true): void {
     if (!this.currentStateOnly && !value) return;
@@ -224,6 +231,8 @@ class InputHandler implements IInputHandler {
   protected get keyState() { return this._keyState; }
 
   protected onKeyShell(e: KeyboardEvent, value: boolean) {
+    if (e.target === this.watchedElement) e.preventDefault();
+    else if (!this.watchGlobal) return;
     const event = value ? this.inputDown : this.inputUp, prior = structuredClone(this._keyState), actions = InputHandler.defaultBindingsReversed.get(e.key);
     if (!this.currentStateOnly && !value) {
       const after = structuredClone(this._keyState);
@@ -248,17 +257,17 @@ class InputHandler implements IInputHandler {
     event.fire({ action: a, state: after, priorState: prior });
   }
 
-  private onKeyDownCb = (e: KeyboardEvent) => this.onKeyShell(e, true);
-  private onKeyUpCb = (e: KeyboardEvent) => this.onKeyShell(e, false);
+  private onKeyDownCb: EventListener = ((e: KeyboardEvent) => this.onKeyShell(e, true)) as EventListener;
+  private onKeyUpCb:   EventListener = ((e: KeyboardEvent) => this.onKeyShell(e, false)) as EventListener;
 
   private initDefaultInputs() {
-    document.addEventListener("keydown", this.onKeyDownCb);
-    document.addEventListener("keyup", this.onKeyUpCb);
+    (this.watchedElement ?? document).addEventListener("keydown", this.onKeyDownCb);
+    (this.watchedElement ?? document).addEventListener("keyup", this.onKeyUpCb);
   }
 
   private clearDefaultInputs() {
-    document.removeEventListener("keydown", this.onKeyDownCb);
-    document.removeEventListener("keyup", this.onKeyUpCb);
+    (this.watchedElement ?? document).removeEventListener("keydown", this.onKeyDownCb);
+    (this.watchedElement ?? document).removeEventListener("keyup", this.onKeyUpCb);
   }
 
   public resetState(): void {
@@ -274,8 +283,11 @@ class InputHandler implements IInputHandler {
 }
 
 class TouchInputHandler<T extends HTMLElement> extends InputHandler {
-  constructor(public readonly inputElements: { up: T; down: T; left: T; right: T }) {
-    super();
+  constructor(
+    public readonly inputElements: { up: T; down: T; left: T; right: T },
+    watchedElement?: HTMLElement,
+  ) {
+    super(watchedElement);
     this.initDefaultTouchInputs();
   }
 

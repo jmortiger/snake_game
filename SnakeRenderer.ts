@@ -65,7 +65,7 @@ class SnakeRenderer {
         down:  touchControls.querySelector<HTMLElement>("#down")!,
         left:  touchControls.querySelector<HTMLElement>("#left")!,
         right: touchControls.querySelector<HTMLElement>("#right")!,
-      });
+      }, ctx.canvas);
       this.engine = new SnakeEngine(config, inputHandler);
       this.inputDisplayManager = InputDisplay.fromTouchInputHandler(inputHandler);
       const t = DebugLevel.stringify;
@@ -91,7 +91,7 @@ class SnakeRenderer {
     this.engine.onGameLost.add(_e => this.endGame(false));
     this.engine.onGameWon.add(_e => this.endGame(true));
     this.engine.onGamePaused.add(_e => this.renderPausedOverlay());
-    document.addEventListener("keypress", (e: KeyboardEvent) => {
+    document.addEventListener("keydown", (e: KeyboardEvent) => {
       if (e.key === "p") {
         if (this.engine.isGamePaused) {
           this.engine.resumeGame();
