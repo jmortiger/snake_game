@@ -383,8 +383,8 @@ class NodeGeneration {
 
   public static generateFromEngineConfig(config: IEngineConfig) {
     const claimedNodes: IPoint[] = [];
-    if (typeof config.obstacleConfig.startingObjs === "object") claimedNodes.concat(config.obstacleConfig.startingObjs);
-    if (typeof config.pelletConfig.startingObjs === "object") claimedNodes.concat(config.pelletConfig.startingObjs);
+    if (typeof config.obstacleConfig.startingObjs === "object") claimedNodes.push(...config.obstacleConfig.startingObjs);
+    if (typeof config.pelletConfig.startingObjs === "object") claimedNodes.push(...config.pelletConfig.startingObjs);
     return this.generateFromSnakeConfig(
       config,
       RectInt.fromDimensionsAndMin(config.gridWidth, config.gridHeight),
