@@ -32,12 +32,14 @@ function initialize(cfg: IEngineConfig) {
   ctx.clearRect(0, 0, canvas.width, canvas.height);
   // Wait for assets to load before setting up the game
   r.initGame().then(() => {
-    document.onkeyup = (e: KeyboardEvent) => {
+    const _t = (e: KeyboardEvent) => {
+      if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return;
       if (e.key === " ") {
         r.startGame();
-        document.onkeyup = null;
+        document.removeEventListener("keyup", _t);
       }
     };
+    document.addEventListener("keyup", _t);
     r.draw({ engine: r.engine });
   }).catch((error) => {
     console.error("Failed to load game assets:", error);
