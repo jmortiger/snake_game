@@ -11,6 +11,7 @@ interface RenderConfig {
   /** Rotate a border asset, or just draw a manual border? */
   get rotateBorders(): boolean | undefined;
   get makeOverlay(): boolean | undefined;
+  get makePauseOverlay(): boolean | undefined;
 };
 
 class SnakeRenderer {
@@ -26,8 +27,9 @@ class SnakeRenderer {
       { identifier: "border", url: "assets/bgBorderLeft.png" },
       { identifier: "background", url: "assets/scale.svg" },
     ],
-    rotateBorders: true,
-    makeOverlay:   false,
+    rotateBorders:    true,
+    makeOverlay:      false,
+    makePauseOverlay: true,
   };
 
   public readonly engine:  SnakeEngine;
@@ -90,7 +92,10 @@ class SnakeRenderer {
     this.engine.onTickCompleted.add(e => this.draw(e));
     this.engine.onGameLost.add(_e => this.endGame(false));
     this.engine.onGameWon.add(_e => this.endGame(true));
-    this.engine.onGamePaused.add(_e => this.renderPausedOverlay());
+    this.engine.onGamePaused.add((_e) => {
+      if (this.renderConfig.makePauseOverlay)
+        this.renderPausedOverlay();
+    });
     // Clear the paused overlay
     this.engine.onGameResumed.add(_e => this.draw(_e));
     document.addEventListener("keydown", (e: KeyboardEvent) => {
