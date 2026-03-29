@@ -91,6 +91,8 @@ class SnakeRenderer {
     this.engine.onGameLost.add(_e => this.endGame(false));
     this.engine.onGameWon.add(_e => this.endGame(true));
     this.engine.onGamePaused.add(_e => this.renderPausedOverlay());
+    // Clear the paused overlay
+    this.engine.onGameResumed.add(_e => this.draw(_e));
     document.addEventListener("keydown", (e: KeyboardEvent) => {
       if (e.key === "p") {
         if (this.engine.isGamePaused) {
