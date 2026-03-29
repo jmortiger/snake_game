@@ -147,6 +147,7 @@ class Snake {
       && (s?.at(0) && s?.at(1) && !s![0]!.hasMagnitudeOf(1, s![1]))) {
       return true;
     }
+    return false;
   }
 
   private static directionFromPoints(s: Point[] | undefined, label: string, config?: ISnakeConfig, playfield?: RectInt) {
@@ -175,11 +176,6 @@ class Snake {
   // #endregion Directions
 
   // #endregion Accessors
-
-  /**
-   * If defined, just screen wrapped the head, so disregard inherent direction & use this instead.
-   */
-  private cachedDirection: Direction | undefined;
   /**
    *
    * @param d The direction the snake is moving in.

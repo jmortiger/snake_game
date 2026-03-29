@@ -4,5 +4,8 @@
   "editor.insertSpaces": true,
   "cSpell.words": [
     "playfield"
-  ]
+  ],
+  "codemetrics.nodeconfiguration.ReturnStatement": 0,
+  "codemetrics.nodeconfiguration.CaseClause": 0,
+  "codemetrics.nodeconfiguration.DefaultClause": 0,
 }
