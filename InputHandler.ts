@@ -231,8 +231,10 @@ class InputHandler implements IInputHandler {
   protected get keyState() { return this._keyState; }
 
   protected onKeyShell(e: KeyboardEvent, value: boolean) {
-    if (e.target === this.watchedElement) e.preventDefault();
-    else if (!this.watchGlobal) return;
+    if (e.target === this.watchedElement) {
+      e.preventDefault();
+      e.stopPropagation();
+    } else if (!this.watchGlobal) return;
     const event = value ? this.inputDown : this.inputUp, prior = structuredClone(this._keyState), actions = InputHandler.defaultBindingsReversed.get(e.key);
     if (!this.currentStateOnly && !value) {
       const after = structuredClone(this._keyState);
