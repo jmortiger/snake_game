@@ -90,8 +90,9 @@ class SnakeRenderer {
     // Only do this if we're reinitializing.
     if (this._wasInitialized) this.engine.initGame();
     this.engine.onTickCompleted.add(e => this.draw(e));
-    this.engine.onGameLost.add(_e => this.endGame(false));
-    this.engine.onGameWon.add(_e => this.endGame(true));
+    // TODO: Handle this better.
+    // this.engine.onGameLost.add(_e => this.endGame(false));
+    // this.engine.onGameWon.add(_e => this.endGame(true));
     this.engine.onGamePaused.add((_e) => {
       if (this.renderConfig.makePauseOverlay)
         this.renderPausedOverlay();
