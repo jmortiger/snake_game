@@ -84,11 +84,11 @@ class SnakeRenderer {
   }
 
   private _wasInitialized = false;
-  public async initGame() {
+  public async initialize({ initGame, managePausing }: { initGame: boolean; managePausing: boolean } = { initGame: true, managePausing: false }) {
     // Wait for all assets to load before initializing the game
     await this.assetPromise;
     // Only do this if we're reinitializing.
-    if (this._wasInitialized) this.engine.initGame();
+    if (initGame && this._wasInitialized) this.engine.initGame();
     this.engine.onTickCompleted.add(e => this.draw(e));
     // TODO: Handle this better.
     // this.engine.onGameLost.add(_e => this.endGame(false));
@@ -97,15 +97,17 @@ class SnakeRenderer {
       this.engine.onGamePaused.add(_e => this.renderPausedOverlay());
     // Clear the paused overlay
     this.engine.onGameResumed.add(_e => this.draw(_e));
-    document.addEventListener("keydown", (e: KeyboardEvent) => {
-      if (e.key === "p") {
-        if (this.engine.isGamePaused) {
-          this.engine.resumeGame();
-        } else {
-          this.engine.pauseGame();
+    // TODO: Migrate this input handling to a more generic input handler
+    if (managePausing)
+      document.addEventListener("keydown", (e: KeyboardEvent) => {
+        if (e.key === "p") {
+          if (this.engine.isGamePaused) {
+            this.engine.resumeGame();
+          } else {
+            this.engine.pauseGame();
+          }
         }
-      }
-    });
+      });
     this._wasInitialized = true;
   }
 
