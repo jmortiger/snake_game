@@ -99,6 +99,11 @@ export default class SnakeEngine implements UiStat<HTMLDivElement> {
     }, []));
   }
 
+  /**
+   * Initializes game state.
+   *
+   * Called from constructor to ensure engine is always in a valid state; only needs to be called externally to reinitialize for a new game.
+   */
   public initGame() {
     this._snake = Snake.fromPreferences(this.config, this.playfieldRect);
 
