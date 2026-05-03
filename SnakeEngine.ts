@@ -262,15 +262,17 @@ export default class SnakeEngine implements UiStat<HTMLDivElement> {
     const elements = bindMappedElementsToEvent(
       this.onTickCompleted,
       e => ({
-        tickCount: html<HTMLSpanElement>`<span><span>Turns</span> <b>${e.tickCount}</b></span>`,
-        // inGameTime:  html<HTMLSpanElement>`<span><span>In Game Time</span> <b>${e.inGameTime}</b></span>`,
-        // timeOverall: html<HTMLSpanElement>`<span><span>Overall Time</span> <b>${e.timeOverall}</b></span>`,
+        tickCount:   html`<span><span>Turns</span> <b>${e.tickCount}</b></span>` as HTMLSpanElement,
+        snakeLength: html`<span><span>Score</span><b>${e.engine._pelletsEaten}</b></span>` as HTMLSpanElement,
+        // inGameTime:  html`<span><span>In Game Time</span> <b>${e.inGameTime}</b></span>` as HTMLSpanElement,
+        // timeOverall: html`<span><span>Overall Time</span> <b>${e.timeOverall}</b></span>` as HTMLSpanElement,
       }),
       initTickArgs,
     );
     return html`
     <div id="engine-stats">
       ${elements.tickCount || ""}
+      ${elements.snakeLength || ""}
       ${elements.inGameTime || ""}
       ${elements.timeOverall || ""}
     </div>
