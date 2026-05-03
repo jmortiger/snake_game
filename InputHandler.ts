@@ -2,6 +2,14 @@ import { Direction } from "./Point2d";
 import { DebugLevel } from "./DebugLevel";
 import { SnakeEvent } from "./Events";
 
+type InputIndicatorStyle = {
+  inputDown:        string;
+  inputReleased:    string;
+  inputUp:          string;
+  unsetBorderStyle: string;
+  setBorderStyle:   string;
+};
+
 class InputAction {
   public static readonly up = new InputAction("up", Direction.up);
   public static readonly down = new InputAction("down", Direction.down);
@@ -22,6 +30,22 @@ interface IInputDisplay<T extends HTMLElement> {
 
 type InputDisplayCb<T extends HTMLElement> = (args: InputEventArgs, element: T, state?: boolean) => void;
 class InputDisplay<T extends HTMLElement> implements IInputDisplay<T> {
+  static readonly defaultStyle: InputIndicatorStyle = {
+    inputDown:        "rgba(0, 255, 0, 1)",
+    inputReleased:    "rgba(255, 255, 0, .5)",
+    inputUp:          "rgba(255, 0, 0, .5)",
+    unsetBorderStyle: "4px solid rgba(0, 0, 0, 0)",
+    setBorderStyle:   "4px solid rgba(0, 255, 0, 1)",
+  };
+
+  static readonly e6Style: InputIndicatorStyle = {
+    inputDown:        "rgba(42, 82, 142, 1)",
+    inputReleased:    "rgba(255, 255, 0, .5)",
+    inputUp:          "rgba(255, 0, 0, .5)",
+    unsetBorderStyle: "0px solid rgba(0, 0, 0, 0)",
+    setBorderStyle:   "0px solid rgba(0, 255, 0, 1)",
+  };
+
   constructor(
     public readonly inputHandler: IInputHandler,
     public readonly up: T,
@@ -31,6 +55,7 @@ class InputDisplay<T extends HTMLElement> implements IInputDisplay<T> {
     private readonly onInputUp: InputDisplayCb<T> = this.defaultOnInputUp,
     private readonly onInputDown: InputDisplayCb<T> = this.defaultOnInputDown,
     private readonly onKeyStateChange: (args: StateEventArgs) => void = this.defaultOnKeyStateChange,
+    private style = InputDisplay.e6Style,
   ) {
     inputHandler.inputDown.add(e => this.dispatchInputDown(e));
     inputHandler.inputUp.add(e => this.dispatchInputUp(e));
@@ -93,30 +118,28 @@ class InputDisplay<T extends HTMLElement> implements IInputDisplay<T> {
   }
 
   private defaultOnInputDown(args: InputEventArgs, element: T, state = true) {
-    element.style.backgroundColor = state ? "rgba(0, 255, 0, 1)" : "rgba(255, 0, 0, .5)";
+    element.style.backgroundColor = state ? this.style.inputDown : this.style.inputUp;
     this.defaultBorder(args);
   }
 
   private defaultOnInputUp(args: InputEventArgs, element: T, state = false) {
-    element.style.backgroundColor = state ? "rgba(255, 255, 0, .5)"  : "";
+    element.style.backgroundColor = state ? this.style.inputReleased  : "";
     this.defaultBorder(args);
   }
 
   private defaultOnKeyStateChange(args: StateEventArgs) {
-    this.up.style.backgroundColor = args.state.up ? (args.action === InputAction.up ? "rgba(0, 255, 0, 1)" : "rgba(255, 255, 0, .5)") : "";
-    this.down.style.backgroundColor = args.state.down ? (args.action === InputAction.down ? "rgba(0, 255, 0, 1)" : "rgba(255, 255, 0, .5)") : "";
-    this.left.style.backgroundColor = args.state.left ? (args.action === InputAction.left ? "rgba(0, 255, 0, 1)" : "rgba(255, 255, 0, .5)") : "";
-    this.right.style.backgroundColor = args.state.right ? (args.action === InputAction.right ? "rgba(0, 255, 0, 1)" : "rgba(255, 255, 0, .5)") : "";
+    this.up.style.backgroundColor = args.state.up ? (args.action === InputAction.up ? this.style.inputDown : this.style.inputReleased) : "";
+    this.down.style.backgroundColor = args.state.down ? (args.action === InputAction.down ? this.style.inputDown : this.style.inputReleased) : "";
+    this.left.style.backgroundColor = args.state.left ? (args.action === InputAction.left ? this.style.inputDown : this.style.inputReleased) : "";
+    this.right.style.backgroundColor = args.state.right ? (args.action === InputAction.right ? this.style.inputDown : this.style.inputReleased) : "";
     this.defaultBorder(args);
   }
 
-  public setBorderStyle = "4px solid rgba(0, 255, 0, 1)";
-  public borderStyle = "4px solid rgba(0,0,0,0)";
   private defaultBorder(args: InputEventArgs | StateEventArgs) {
-    this.up.style.border = args.state.up ? this.setBorderStyle : this.borderStyle;
-    this.down.style.border = args.state.down ? this.setBorderStyle : this.borderStyle;
-    this.left.style.border = args.state.left ? this.setBorderStyle : this.borderStyle;
-    this.right.style.border = args.state.right ? this.setBorderStyle : this.borderStyle;
+    this.up.style.border = args.state.up ? this.style.setBorderStyle : this.style.unsetBorderStyle;
+    this.down.style.border = args.state.down ? this.style.setBorderStyle : this.style.unsetBorderStyle;
+    this.left.style.border = args.state.left ? this.style.setBorderStyle : this.style.unsetBorderStyle;
+    this.right.style.border = args.state.right ? this.style.setBorderStyle : this.style.unsetBorderStyle;
   }
 }
 

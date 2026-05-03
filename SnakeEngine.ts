@@ -257,17 +257,17 @@ export default class SnakeEngine implements UiStat<HTMLParagraphElement> {
     const elements = bindMappedElementsToEvent(
       this.onTickCompleted,
       e => ({
-        tickCount:   html<HTMLParagraphElement>`<p>Turns Completed: ${e.tickCount}</b></p>`,
-        inGameTime:  html<HTMLParagraphElement>`<p>In Game Time: ${e.inGameTime}</b></p>`,
-        timeOverall: html<HTMLParagraphElement>`<p>Overall Time: ${e.timeOverall}</b></p>`,
+        tickCount: html<HTMLParagraphElement>`<p><span>Turns</span> <b>${e.tickCount}</b></p>`,
+        // inGameTime:  html<HTMLParagraphElement>`<p><span>In Game Time</span> <b>${e.inGameTime}</b></p>`,
+        // timeOverall: html<HTMLParagraphElement>`<p><span>Overall Time</span> <b>${e.timeOverall}</b></p>`,
       }),
       initTickArgs,
     );
     return html`
     <p id="engine-stats">
-      ${elements.tickCount}
-      ${elements.inGameTime}
-      ${elements.timeOverall}
+      ${elements.tickCount || ""}
+      ${elements.inGameTime || ""}
+      ${elements.timeOverall || ""}
     </p>
     ` as HTMLParagraphElement;
   }
