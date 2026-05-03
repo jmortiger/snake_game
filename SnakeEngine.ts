@@ -11,6 +11,21 @@ import { bindMappedElementsToEvent } from "./UiStat";
 
 export default class SnakeEngine implements UiStat<HTMLDivElement> {
   public static debugLevel = DebugLevel.LOG;
+  private static DYNAMIC_TICK_CAP_MS = 100;
+  private static DYNAMIC_TICK_GROWTH_STEPS = 10;
+  /** The current dynamically-updated tick rate. */
+  public get effectiveTickRate() {
+    if (this.config.millisecondsPerUpdate <= SnakeEngine.DYNAMIC_TICK_CAP_MS)
+      return this.config.millisecondsPerUpdate;
+    const growth = Math.max(0, this.snake.snakeLength - this.config.startingLength);
+    const progress = Math.min(growth / SnakeEngine.DYNAMIC_TICK_GROWTH_STEPS, 1);
+    const v = this.config.millisecondsPerUpdate + (SnakeEngine.DYNAMIC_TICK_CAP_MS - this.config.millisecondsPerUpdate) * progress;
+    // TODO: Why is this here?!?!
+    // If the step is less than half a second, don't change it?
+    if (Math.abs(this.config.millisecondsPerUpdate - v) < 0.5)
+      return this.config.millisecondsPerUpdate;
+    return v;
+  }
 
   // #region Events
   public readonly onGameOver = new SnakeEvent<GameOverEvent>();
