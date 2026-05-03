@@ -9,7 +9,7 @@ import { html } from "./HtmlTemplate";
 import type UiStat from "./UiStat";
 import { bindMappedElementsToEvent } from "./UiStat";
 
-export default class SnakeEngine implements UiStat<HTMLParagraphElement> {
+export default class SnakeEngine implements UiStat<HTMLDivElement> {
   public static debugLevel = DebugLevel.LOG;
 
   // #region Events
@@ -257,19 +257,19 @@ export default class SnakeEngine implements UiStat<HTMLParagraphElement> {
     const elements = bindMappedElementsToEvent(
       this.onTickCompleted,
       e => ({
-        tickCount: html<HTMLParagraphElement>`<p><span>Turns</span> <b>${e.tickCount}</b></p>`,
-        // inGameTime:  html<HTMLParagraphElement>`<p><span>In Game Time</span> <b>${e.inGameTime}</b></p>`,
-        // timeOverall: html<HTMLParagraphElement>`<p><span>Overall Time</span> <b>${e.timeOverall}</b></p>`,
+        tickCount: html<HTMLSpanElement>`<span><span>Turns</span> <b>${e.tickCount}</b></span>`,
+        // inGameTime:  html<HTMLSpanElement>`<span><span>In Game Time</span> <b>${e.inGameTime}</b></span>`,
+        // timeOverall: html<HTMLSpanElement>`<span><span>Overall Time</span> <b>${e.timeOverall}</b></span>`,
       }),
       initTickArgs,
     );
     return html`
-    <p id="engine-stats">
+    <div id="engine-stats">
       ${elements.tickCount || ""}
       ${elements.inGameTime || ""}
       ${elements.timeOverall || ""}
-    </p>
-    ` as HTMLParagraphElement;
+    </div>
+    ` as HTMLDivElement;
   }
 }
 
