@@ -6,6 +6,7 @@ type InputIndicatorStyle = {
   inputDown:        string;
   inputReleased:    string;
   inputUp:          string;
+  inputCleared:     string;
   unsetBorderStyle: string;
   setBorderStyle:   string;
 };
@@ -34,6 +35,7 @@ class InputDisplay<T extends HTMLElement> implements IInputDisplay<T> {
     inputDown:        "rgba(0, 255, 0, 1)",
     inputReleased:    "rgba(255, 255, 0, .5)",
     inputUp:          "rgba(255, 0, 0, .5)",
+    inputCleared:     "",
     unsetBorderStyle: "4px solid rgba(0, 0, 0, 0)",
     setBorderStyle:   "4px solid rgba(0, 255, 0, 1)",
   };
@@ -42,6 +44,7 @@ class InputDisplay<T extends HTMLElement> implements IInputDisplay<T> {
     inputDown:        "rgba(42, 82, 142, 1)",
     inputReleased:    "rgba(255, 255, 0, .5)",
     inputUp:          "rgba(255, 0, 0, .5)",
+    inputCleared:     "",
     unsetBorderStyle: "0px solid rgba(0, 0, 0, 0)",
     setBorderStyle:   "0px solid rgba(0, 255, 0, 1)",
   };
@@ -123,15 +126,15 @@ class InputDisplay<T extends HTMLElement> implements IInputDisplay<T> {
   }
 
   private defaultOnInputUp(args: InputEventArgs, element: T, state = false) {
-    element.style.backgroundColor = state ? this.style.inputReleased  : "";
+    element.style.backgroundColor = state ? this.style.inputReleased : this.style.inputCleared;
     this.defaultBorder(args);
   }
 
   private defaultOnKeyStateChange(args: StateEventArgs) {
-    this.up.style.backgroundColor = args.state.up ? (args.action === InputAction.up ? this.style.inputDown : this.style.inputReleased) : "";
-    this.down.style.backgroundColor = args.state.down ? (args.action === InputAction.down ? this.style.inputDown : this.style.inputReleased) : "";
-    this.left.style.backgroundColor = args.state.left ? (args.action === InputAction.left ? this.style.inputDown : this.style.inputReleased) : "";
-    this.right.style.backgroundColor = args.state.right ? (args.action === InputAction.right ? this.style.inputDown : this.style.inputReleased) : "";
+    this.up.style.backgroundColor = args.state.up ? (args.action === InputAction.up ? this.style.inputDown : this.style.inputReleased) : this.style.inputCleared;
+    this.down.style.backgroundColor = args.state.down ? (args.action === InputAction.down ? this.style.inputDown : this.style.inputReleased) : this.style.inputCleared;
+    this.left.style.backgroundColor = args.state.left ? (args.action === InputAction.left ? this.style.inputDown : this.style.inputReleased) : this.style.inputCleared;
+    this.right.style.backgroundColor = args.state.right ? (args.action === InputAction.right ? this.style.inputDown : this.style.inputReleased) : this.style.inputCleared;
     this.defaultBorder(args);
   }
 
@@ -432,4 +435,6 @@ export {
 
 export type {
   IInputHandler,
+  InputDisplayCb,
+  StateEventArgs,
 };

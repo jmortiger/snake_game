@@ -1,6 +1,6 @@
 import { DebugLevel } from "./DebugLevel";
 import type { GameStateEvent } from "./Events";
-import { InputDisplay, TouchInputHandler } from "./InputHandler";
+import { InputDisplay, TouchInputHandler, type InputDisplayCb, type StateEventArgs } from "./InputHandler";
 import { RectInt2d, Direction2d } from "./Point2d";
 import { SnakeEngine } from "./SnakeEngine";
 import { SnakeImage, type ImageParams } from "./SnakeImage";
@@ -59,6 +59,11 @@ class SnakeRenderer {
     public readonly ctx: CanvasRenderingContext2D,
     public readonly config: IEngineConfig = EngineConfig.defaultConfig,
     public readonly renderConfig: RenderConfig = SnakeRenderer.defaultConfig,
+    inputDisplayCallbacks?: {
+      onInputUp?:        InputDisplayCb<HTMLElement>;
+      onInputDown?:      InputDisplayCb<HTMLElement>;
+      onKeyStateChange?: (args: StateEventArgs) => void;
+    },
   ) {
     const touchControls = document.querySelector("#touch-container");
     if (touchControls) {
@@ -69,7 +74,12 @@ class SnakeRenderer {
         right: touchControls.querySelector<HTMLElement>("#right")!,
       }, ctx.canvas);
       this.engine = new SnakeEngine(config, inputHandler);
-      this.inputDisplayManager = InputDisplay.fromTouchInputHandler(inputHandler);
+      this.inputDisplayManager = InputDisplay.fromTouchInputHandler(
+        inputHandler,
+        inputDisplayCallbacks?.onInputUp,
+        inputDisplayCallbacks?.onInputDown,
+        inputDisplayCallbacks?.onKeyStateChange,
+      );
       const t = DebugLevel.stringify;
       DebugLevel.stringify = false;
       this._dbgLvl.print(DebugLevel.INFO, "Hooked up input display: %o", inputHandler.inputElements);
@@ -90,7 +100,7 @@ class SnakeRenderer {
     // Only do this if we're reinitializing.
     if (initGame && this._wasInitialized) this.engine.initGame();
     this.engine.onTickCompleted.add(e => this.draw(e));
-    // TODO: Handle this better.
+    // TODO: Handle this toggle better.
     // this.engine.onGameLost.add(_e => this.endGame(false));
     // this.engine.onGameWon.add(_e => this.endGame(true));
     if (this.renderConfig.makePauseOverlay)
