@@ -12,7 +12,7 @@ import { bindMappedElementsToEvent } from "./UiStat";
 export default class SnakeEngine implements UiStat<HTMLDivElement> {
   public static debugLevel = DebugLevel.LOG;
   private static DYNAMIC_TICK_CAP_MS = 100;
-  private static DYNAMIC_TICK_GROWTH_STEPS = 10;
+  private static DYNAMIC_TICK_GROWTH_STEPS = 15;
   /** The current dynamically-updated tick rate. */
   public get effectiveTickRate() {
     if (this.config.millisecondsPerUpdate <= SnakeEngine.DYNAMIC_TICK_CAP_MS)
