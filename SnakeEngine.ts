@@ -1,5 +1,5 @@
 import { SnakeEvent, type GameLostEvent, type GameOverEvent, type GameStateEvent, type PelletEatenEvent, type TickEvent } from "./Events";
-import { InputHandler, type IInputHandler } from "./InputHandler";
+import { InputHandler, QueuedInputHandler, type IKeyHandler } from "./InputHandler";
 import { Direction, Point, RectInt as Rect } from "./Point2d";
 import Snake from "./Snake";
 import { EngineConfig, randomIndex, type IEngineConfig, type IGridObjectConfig } from "./Types";
@@ -73,7 +73,7 @@ export default class SnakeEngine implements UiStat<HTMLDivElement> {
 
   constructor(
     public readonly config: IEngineConfig = EngineConfig.defaultConfig,
-    public readonly inputHandler: IInputHandler = new InputHandler(),
+    public readonly inputHandler: IKeyHandler = new InputHandler(),
   ) {
     this.playfieldRect = Rect.fromDimensionsAndMin(config.gridWidth, config.gridHeight);
     SnakeEngine.debugLevel.print(DebugLevel.INFO, "Config: %o\nPlayfield: %o", config, this.playfieldRect);
@@ -131,6 +131,8 @@ export default class SnakeEngine implements UiStat<HTMLDivElement> {
     const t = this.getValidSpawnLocations();
     this.initPointObjectArray(this.config.pelletConfig, this.pellets, t);
     this.initPointObjectArray(this.config.obstacleConfig, this.obstacles, t);
+
+    if (this.inputHandler instanceof QueuedInputHandler) this.inputHandler.clearInputQueue();
   }
 
   // #region Game State Management
@@ -171,6 +173,7 @@ export default class SnakeEngine implements UiStat<HTMLDivElement> {
   private endGame(reason?: "won" | "other" | Point[] | Point) {
     this.engineDriver.stopDriving();
     this._isGameOver = true;
+    if (this.inputHandler instanceof QueuedInputHandler) this.inputHandler.clearInputQueue();
     if (!reason) return;
     let args: GameOverEvent | GameLostEvent = { engine: this, reason: typeof reason === "string" ? reason : "lost" };
     switch (reason) {
@@ -220,10 +223,17 @@ export default class SnakeEngine implements UiStat<HTMLDivElement> {
     const args: TickEvent = { engine: this, tickCount: ++this._tickCount, inGameTime: this.inGameTime, timeOverall: this.currentOverallTime };
     this.onTickStarted.fire(args);
     // 1. Inputs
-    const keys = this.inputHandler.getKeysDown();
-    this.inputHandler.resetState();
-    // TODO: Prioritize current direction?
-    let d = Point.included(this.snake.headDirection, keys.map(e => e.direction)) ? this.snake.headDirection : (keys[0]?.direction || this.snake.headDirection);
+    let d: Direction;
+    if (this.inputHandler instanceof QueuedInputHandler) {
+      const queuedDirection = this.inputHandler.dequeueNextValidDirection(this.snake.headDirection);
+      this.inputHandler.resetState();
+      d = queuedDirection || this.snake.headDirection;
+    } else {
+      const keys = this.inputHandler.getKeysDown();
+      this.inputHandler.resetState();
+      // TODO: Prioritize current direction?
+      d = Point.included(this.snake.headDirection, keys.map(e => e.direction)) ? this.snake.headDirection : (keys[0]?.direction || this.snake.headDirection);
+    }
     if (Point.equals(this.snake.headDirection, d.opposite)) {
       SnakeEngine.debugLevel.print(DebugLevel.WARN, "Ignoring 180 degree turn");
       d = this.snake.headDirection;

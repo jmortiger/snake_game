@@ -50,7 +50,7 @@ class InputDisplay<T extends HTMLElement> implements IInputDisplay<T> {
   };
 
   constructor(
-    public readonly inputHandler: IInputHandler,
+    public readonly inputHandler: IKeyHandler,
     public readonly up: T,
     public readonly down: T,
     public readonly left: T,
@@ -68,8 +68,8 @@ class InputDisplay<T extends HTMLElement> implements IInputDisplay<T> {
     this.onKeyStateChange({ priorState: t, state: t });
   }
 
-  public static fromTouchInputHandler<T extends HTMLElement>(
-    inputHandler: TouchInputHandler<T>,
+  public static fromTouchInput<T extends HTMLElement>(
+    inputHandler: TouchInputMixin<T>,
     onInputUp?: InputDisplayCb<T>,
     onInputDown?: InputDisplayCb<T>,
     onKeyStateChange?: (args: StateEventArgs) => void,
@@ -148,7 +148,7 @@ class InputDisplay<T extends HTMLElement> implements IInputDisplay<T> {
 
 type InputEventArgs = { action: InputAction; state: _KeyState; priorState: _KeyState };
 type StateEventArgs = { action?: InputAction; state: _KeyState; priorState: _KeyState };
-interface IInputHandler {
+interface IKeyHandler {
   /** Should the state overwrite released keys, or only update pressed/held keys? */
   get currentStateOnly(): boolean;
   isKeyDown(action: InputAction): boolean;
@@ -160,6 +160,9 @@ interface IInputHandler {
   get keyStateChanged(): SnakeEvent<StateEventArgs>;
   get inputDown(): SnakeEvent<InputEventArgs>;
   get inputUp(): SnakeEvent<InputEventArgs>;
+}
+interface IInputHandler extends IKeyHandler {
+  setInputState(i: InputAction, value: boolean): void;
 }
 
 type _KeyState = {
@@ -192,20 +195,20 @@ class InputHandler implements IInputHandler {
     this.initDefaultInputs();
   }
 
-  protected setInputState(i: InputAction, value = true): void {
+  public setInputState(i: InputAction, value = true): void {
     if (!this.currentStateOnly && !value) return;
     const prior = structuredClone(this._keyState);
     this._keyState[i.name] = value;
     this.keyStateChanged.fire({ action: i, state: structuredClone(this._keyState), priorState: prior });
   }
 
-  isKeyDown(action: InputAction): boolean {
+  public isKeyDown(action: InputAction): boolean {
     return this._keyState[action.name]!;
   }
 
   readonly wasKeyPressed = this.isKeyDown;
 
-  getKeysDown() {
+  public getKeysDown() {
     const r: InputAction[] = [];
     if (this._keyState.up) r.push(InputAction.up);
     if (this._keyState.down) r.push(InputAction.down);
@@ -255,13 +258,16 @@ class InputHandler implements IInputHandler {
   };
 
   protected get keyState() { return this._keyState; }
+  protected onKeyShellBeforeDispatch(e: KeyboardEvent, value: boolean, action: InputAction) {}
 
   protected onKeyShell(e: KeyboardEvent, value: boolean) {
     if (e.target === this.watchedElement) {
       e.preventDefault();
       e.stopPropagation();
     } else if (!this.watchGlobal) return;
-    const event = value ? this.inputDown : this.inputUp, prior = structuredClone(this._keyState), actions = InputHandler.defaultBindingsReversed.get(e.key);
+    const event = value ? this.inputDown : this.inputUp,
+          prior = structuredClone(this._keyState),
+          actions = InputHandler.defaultBindingsReversed.get(e.key);
     if (!this.currentStateOnly && !value) {
       const after = structuredClone(this._keyState);
       actions?.forEach(a => event.fire({ action: a, state: after, priorState: prior }));
@@ -281,6 +287,7 @@ class InputHandler implements IInputHandler {
       this._keyState.right = value;
       a = InputAction.right;
     } else return;
+    this.onKeyShellBeforeDispatch(e, value, a);
     const after = structuredClone(this._keyState);
     event.fire({ action: a, state: after, priorState: prior });
   }
@@ -310,12 +317,66 @@ class InputHandler implements IInputHandler {
   }
 }
 
-class TouchInputHandler<T extends HTMLElement> extends InputHandler {
+class QueuedInputHandler extends InputHandler {
+  private readonly inputQueue: InputAction[] = [];
+  constructor(
+    watchedElement: HTMLElement | undefined = undefined,
+    public readonly queueMaxLength = 2,
+  ) { super(watchedElement); }
+
+  override setInputState(i: InputAction, value = true): void {
+    if (!this.currentStateOnly && !value) return;
+    const prior = structuredClone(this.keyState);
+    if (value) this.enqueueInputAction(i);
+    this.keyState[i.name] = value;
+    this.keyStateChanged.fire({ action: i, state: structuredClone(this.keyState), priorState: prior });
+  }
+
+  public enqueueInputAction(action: InputAction) {
+    if (!action)
+      return false;
+    const queue = this.inputQueue;
+    const tail = queue.at(-1);
+    if (tail?.direction === action.direction)
+      return false;
+    if (tail?.direction === action.direction.opposite)
+      return false;
+    if (queue.length >= this.queueMaxLength)
+      return false;
+    queue.push(action);
+    return true;
+  }
+
+  public dequeueNextValidDirection(currentDirection: Direction) {
+    while (this.inputQueue.length > 0) {
+      const action = this.inputQueue.shift();
+      if (!action)
+        continue;
+      if (currentDirection && action.direction === currentDirection.opposite)
+        continue;
+      return action.direction;
+    }
+    return undefined;
+  }
+
+  public clearInputQueue() { this.inputQueue.splice(0); }
+
+  protected override onKeyShell(e: KeyboardEvent, value: boolean): void {
+    if (value && e.repeat) return;
+    super.onKeyShell(e, value);
+  }
+
+  protected override onKeyShellBeforeDispatch(e: KeyboardEvent, value: boolean, action: InputAction): void {
+    this.enqueueInputAction(action);
+  }
+}
+
+class TouchInputMixin<T extends HTMLElement> implements IKeyHandler {
   constructor(
     public readonly inputElements: { up: T; down: T; left: T; right: T },
     watchedElement?: HTMLElement,
+    public readonly inputHandler: IInputHandler = new InputHandler(watchedElement),
   ) {
-    super(watchedElement);
     this.initDefaultTouchInputs();
   }
 
@@ -359,46 +420,57 @@ class TouchInputHandler<T extends HTMLElement> extends InputHandler {
 
   private readonly cbMatrix = {
     up: {
-      pressed:  (_e: TouchEvent | MouseEvent) => this.setInputState(InputAction.up, true),
-      released: (_e: TouchEvent | MouseEvent) => this.setInputState(InputAction.up, false),
+      pressed:  (_e: TouchEvent | MouseEvent) => this.inputHandler.setInputState(InputAction.up, true),
+      released: (_e: TouchEvent | MouseEvent) => this.inputHandler.setInputState(InputAction.up, false),
     },
     down: {
-      pressed:  (_e: TouchEvent | MouseEvent) => this.setInputState(InputAction.down, true),
-      released: (_e: TouchEvent | MouseEvent) => this.setInputState(InputAction.down, false),
+      pressed:  (_e: TouchEvent | MouseEvent) => this.inputHandler.setInputState(InputAction.down, true),
+      released: (_e: TouchEvent | MouseEvent) => this.inputHandler.setInputState(InputAction.down, false),
     },
     left: {
-      pressed:  (_e: TouchEvent | MouseEvent) => this.setInputState(InputAction.left, true),
-      released: (_e: TouchEvent | MouseEvent) => this.setInputState(InputAction.left, false),
+      pressed:  (_e: TouchEvent | MouseEvent) => this.inputHandler.setInputState(InputAction.left, true),
+      released: (_e: TouchEvent | MouseEvent) => this.inputHandler.setInputState(InputAction.left, false),
     },
     right: {
-      pressed:  (_e: TouchEvent | MouseEvent) => this.setInputState(InputAction.right, true),
-      released: (_e: TouchEvent | MouseEvent) => this.setInputState(InputAction.right, false),
+      pressed:  (_e: TouchEvent | MouseEvent) => this.inputHandler.setInputState(InputAction.right, true),
+      released: (_e: TouchEvent | MouseEvent) => this.inputHandler.setInputState(InputAction.right, false),
     },
   };
-}
 
-class DebugTouchInputHandler<T extends HTMLElement> extends TouchInputHandler<T> {
-  constructor(inputElements: { up: T; down: T; left: T; right: T }, public level: DebugLevel = DebugLevel.DEBUG) {
-    super(inputElements);
+  public get currentStateOnly(): boolean {
+    return this.inputHandler.currentStateOnly;
   }
 
-  override toggleDefaultInputSystem(): void {
-    this.level.print(DebugLevel.INFO, "Toggling default input system %o", this.useDefaultInputSystem ? "off" : "on");
-    super.toggleDefaultInputSystem();
+  public isKeyDown(action: InputAction): boolean {
+    return this.inputHandler.isKeyDown(action);
   }
 
-  protected override onKeyShell(e: KeyboardEvent, value: boolean): void {
-    this.level.print(DebugLevel.LOG, "Key %s %s", e.key, value ? "pressed" : "released");
-    this.level.print(DebugLevel.DEBUG, "Prior State: %o", super.keyState);
-    super.onKeyShell(e, value);
-    this.level.print(DebugLevel.DEBUG, "New State: %o", super.keyState);
+  public wasKeyPressed(action: InputAction): boolean {
+    return this.inputHandler.wasKeyPressed(action);
   }
 
-  override resetState(): void {
-    this.level.print(DebugLevel.INFO, "Resetting key state...");
-    this.level.print(DebugLevel.DEBUG, "Prior State: %o", super.keyState);
-    super.resetState();
-    this.level.print(DebugLevel.DEBUG, "New State: %o", super.keyState);
+  public getKeysDown(): InputAction[] {
+    return this.inputHandler.getKeysDown();
+  }
+
+  public getKeysPressed(): InputAction[] {
+    return this.inputHandler.getKeysPressed();
+  }
+
+  public resetState(): void {
+    return this.inputHandler.resetState();
+  }
+
+  public get keyStateChanged(): SnakeEvent<StateEventArgs> {
+    return this.inputHandler.keyStateChanged;
+  }
+
+  public get inputDown(): SnakeEvent<InputEventArgs> {
+    return this.inputHandler.inputDown;
+  }
+
+  public get inputUp(): SnakeEvent<InputEventArgs> {
+    return this.inputHandler.inputUp;
   }
 }
 
@@ -428,13 +500,14 @@ export {
   InputAction,
   InputHandler,
   DebugInputHandler,
-  TouchInputHandler,
+  TouchInputMixin,
   InputDisplay,
-  DebugTouchInputHandler
+  QueuedInputHandler,
 };
 
 export type {
   IInputHandler,
+  IKeyHandler,
   InputDisplayCb,
   StateEventArgs,
 };

@@ -1,6 +1,6 @@
 import { DebugLevel } from "./DebugLevel";
 import type { GameStateEvent } from "./Events";
-import { InputDisplay, TouchInputHandler, type InputDisplayCb, type StateEventArgs } from "./InputHandler";
+import { InputDisplay, TouchInputMixin, type InputDisplayCb, type StateEventArgs } from "./InputHandler";
 import { RectInt2d, Direction2d } from "./Point2d";
 import { SnakeEngine } from "./SnakeEngine";
 import { SnakeImage, type ImageParams } from "./SnakeImage";
@@ -67,14 +67,14 @@ class SnakeRenderer {
   ) {
     const touchControls = document.querySelector("#touch-container");
     if (touchControls) {
-      const inputHandler = new TouchInputHandler({
+      const inputHandler = new TouchInputMixin({
         up:    touchControls.querySelector<HTMLElement>("#up")!,
         down:  touchControls.querySelector<HTMLElement>("#down")!,
         left:  touchControls.querySelector<HTMLElement>("#left")!,
         right: touchControls.querySelector<HTMLElement>("#right")!,
       }, ctx.canvas);
       this.engine = new SnakeEngine(config, inputHandler);
-      this.inputDisplayManager = InputDisplay.fromTouchInputHandler(
+      this.inputDisplayManager = InputDisplay.fromTouchInput(
         inputHandler,
         inputDisplayCallbacks?.onInputUp,
         inputDisplayCallbacks?.onInputDown,
