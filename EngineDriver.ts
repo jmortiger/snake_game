@@ -22,7 +22,8 @@ export default class EngineDriver {
 
   private doTick() {
     this.engine.update();
-    this.setNextTimeout();
+    if (this.isDriving)
+      this.setNextTimeout();
   }
 
   private setNextTimeout() {
@@ -35,7 +36,7 @@ export default class EngineDriver {
   public stopDriving(force = false) {
     if (!force && !this.timerId && document.onkeyup !== this.playOnSpaceBar && document.onkeyup !== this.bound_playOnSpaceBar) return false;
     if (!this.onManualUpdateMode) {
-      window.clearInterval(this.timerId);
+      window.clearTimeout(this.timerId);
       this.timerId = undefined;
     } else {
       document.onkeyup = null;
