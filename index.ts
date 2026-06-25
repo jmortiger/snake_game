@@ -1,4 +1,3 @@
-import type SnakeEngine from "./SnakeEngine";
 import SnakeRenderer from "./SnakeRenderer";
 import { EngineConfig, type IEngineConfig } from "./Types";
 
@@ -31,7 +30,7 @@ function initialize(cfg: IEngineConfig) {
 
   ctx.clearRect(0, 0, canvas.width, canvas.height);
   // Wait for assets to load before setting up the game
-  r.initGame().then(() => {
+  r.initialize({ initGame: true, managePausing: true }).then(() => {
     const _t = (e: KeyboardEvent) => {
       if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return;
       if (e.key === " ") {

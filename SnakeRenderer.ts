@@ -1,6 +1,6 @@
 import { DebugLevel } from "./DebugLevel";
 import type { GameStateEvent } from "./Events";
-import { InputDisplay, TouchInputHandler } from "./InputHandler";
+import { InputDisplay, TouchInputMixin, type InputDisplayCb, type StateEventArgs } from "./InputHandler";
 import { RectInt2d, Direction2d } from "./Point2d";
 import { SnakeEngine } from "./SnakeEngine";
 import { SnakeImage, type ImageParams } from "./SnakeImage";
@@ -59,17 +59,27 @@ class SnakeRenderer {
     public readonly ctx: CanvasRenderingContext2D,
     public readonly config: IEngineConfig = EngineConfig.defaultConfig,
     public readonly renderConfig: RenderConfig = SnakeRenderer.defaultConfig,
+    inputDisplayCallbacks?: {
+      onInputUp?:        InputDisplayCb<HTMLElement>;
+      onInputDown?:      InputDisplayCb<HTMLElement>;
+      onKeyStateChange?: (args: StateEventArgs) => void;
+    },
   ) {
     const touchControls = document.querySelector("#touch-container");
     if (touchControls) {
-      const inputHandler = new TouchInputHandler({
+      const inputHandler = new TouchInputMixin({
         up:    touchControls.querySelector<HTMLElement>("#up")!,
         down:  touchControls.querySelector<HTMLElement>("#down")!,
         left:  touchControls.querySelector<HTMLElement>("#left")!,
         right: touchControls.querySelector<HTMLElement>("#right")!,
       }, ctx.canvas);
       this.engine = new SnakeEngine(config, inputHandler);
-      this.inputDisplayManager = InputDisplay.fromTouchInputHandler(inputHandler);
+      this.inputDisplayManager = InputDisplay.fromTouchInput(
+        inputHandler,
+        inputDisplayCallbacks?.onInputUp,
+        inputDisplayCallbacks?.onInputDown,
+        inputDisplayCallbacks?.onKeyStateChange,
+      );
       const t = DebugLevel.stringify;
       DebugLevel.stringify = false;
       this._dbgLvl.print(DebugLevel.INFO, "Hooked up input display: %o", inputHandler.inputElements);
@@ -84,29 +94,30 @@ class SnakeRenderer {
   }
 
   private _wasInitialized = false;
-  public async initGame() {
+  public async initialize({ initGame, managePausing }: { initGame: boolean; managePausing: boolean } = { initGame: true, managePausing: false }) {
     // Wait for all assets to load before initializing the game
     await this.assetPromise;
     // Only do this if we're reinitializing.
-    if (this._wasInitialized) this.engine.initGame();
+    if (initGame && this._wasInitialized) this.engine.initGame();
     this.engine.onTickCompleted.add(e => this.draw(e));
-    this.engine.onGameLost.add(_e => this.endGame(false));
-    this.engine.onGameWon.add(_e => this.endGame(true));
-    this.engine.onGamePaused.add((_e) => {
-      if (this.renderConfig.makePauseOverlay)
-        this.renderPausedOverlay();
-    });
+    // TODO: Handle this toggle better.
+    // this.engine.onGameLost.add(_e => this.endGame(false));
+    // this.engine.onGameWon.add(_e => this.endGame(true));
+    if (this.renderConfig.makePauseOverlay)
+      this.engine.onGamePaused.add(_e => this.renderPausedOverlay());
     // Clear the paused overlay
     this.engine.onGameResumed.add(_e => this.draw(_e));
-    document.addEventListener("keydown", (e: KeyboardEvent) => {
-      if (e.key === "p") {
-        if (this.engine.isGamePaused) {
-          this.engine.resumeGame();
-        } else {
-          this.engine.pauseGame();
+    // TODO: Migrate this input handling to a more generic input handler
+    if (managePausing)
+      document.addEventListener("keydown", (e: KeyboardEvent) => {
+        if (e.key === "p") {
+          if (this.engine.isGamePaused) {
+            this.engine.resumeGame();
+          } else {
+            this.engine.pauseGame();
+          }
         }
-      }
-    });
+      });
     this._wasInitialized = true;
   }
 
@@ -225,13 +236,13 @@ class SnakeRenderer {
           const tileType = this.getTileType(i, j);
 
           switch (tileType) {
-          case "border":
-          case "corner":
-            backgroundDrawn = this.drawRotatedTile(tileType, offsetWidth, offsetHeight, this.getRotationAngle(i, j, tileType));
-            break;
-          default: // case "tile":
-            backgroundDrawn = SnakeImage.tryDrawImage(this.ctx, "bgTile", offsetWidth, offsetHeight, { x: this.renderedCellWidth, y: this.renderedCellWidth });
-            break;
+            case "border":
+            case "corner":
+              backgroundDrawn = this.drawRotatedTile(tileType, offsetWidth, offsetHeight, this.getRotationAngle(i, j, tileType));
+              break;
+            default: // case "tile":
+              backgroundDrawn = SnakeImage.tryDrawImage(this.ctx, "bgTile", offsetWidth, offsetHeight, { x: this.renderedCellWidth, y: this.renderedCellWidth });
+              break;
           }
         } else {
           backgroundDrawn = SnakeImage.tryDrawImage(this.ctx, "bgTile", offsetWidth, offsetHeight, { x: this.renderedCellWidth, y: this.renderedCellWidth });

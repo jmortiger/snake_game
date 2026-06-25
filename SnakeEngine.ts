@@ -1,5 +1,5 @@
 import { SnakeEvent, type GameLostEvent, type GameOverEvent, type GameStateEvent, type PelletEatenEvent, type TickEvent } from "./Events";
-import { InputHandler, type IInputHandler } from "./InputHandler";
+import { InputHandler, QueuedInputHandler, type IKeyHandler } from "./InputHandler";
 import { Direction, Point, RectInt as Rect } from "./Point2d";
 import Snake from "./Snake";
 import { EngineConfig, randomIndex, type IEngineConfig, type IGridObjectConfig } from "./Types";
@@ -9,8 +9,23 @@ import { html } from "./HtmlTemplate";
 import type UiStat from "./UiStat";
 import { bindMappedElementsToEvent } from "./UiStat";
 
-export default class SnakeEngine implements UiStat<HTMLParagraphElement> {
+export default class SnakeEngine implements UiStat<HTMLDivElement> {
   public static debugLevel = DebugLevel.LOG;
+  private static DYNAMIC_TICK_CAP_MS = 100;
+  private static DYNAMIC_TICK_GROWTH_STEPS = 15;
+  /** The current dynamically-updated tick rate. */
+  public get effectiveTickRate() {
+    if (this.config.millisecondsPerUpdate <= SnakeEngine.DYNAMIC_TICK_CAP_MS)
+      return this.config.millisecondsPerUpdate;
+    const growth = Math.max(0, this.snake.snakeLength - this.config.startingLength);
+    const progress = Math.min(growth / SnakeEngine.DYNAMIC_TICK_GROWTH_STEPS, 1);
+    const v = this.config.millisecondsPerUpdate + (SnakeEngine.DYNAMIC_TICK_CAP_MS - this.config.millisecondsPerUpdate) * progress;
+    // TODO: Why is this here?!?!
+    // If the step is less than half a second, don't change it?
+    if (Math.abs(this.config.millisecondsPerUpdate - v) < 0.5)
+      return this.config.millisecondsPerUpdate;
+    return v;
+  }
 
   // #region Events
   public readonly onGameOver = new SnakeEvent<GameOverEvent>();
@@ -58,7 +73,7 @@ export default class SnakeEngine implements UiStat<HTMLParagraphElement> {
 
   constructor(
     public readonly config: IEngineConfig = EngineConfig.defaultConfig,
-    public readonly inputHandler: IInputHandler = new InputHandler(),
+    public readonly inputHandler: IKeyHandler = new InputHandler(),
   ) {
     this.playfieldRect = Rect.fromDimensionsAndMin(config.gridWidth, config.gridHeight);
     SnakeEngine.debugLevel.print(DebugLevel.INFO, "Config: %o\nPlayfield: %o", config, this.playfieldRect);
@@ -99,6 +114,11 @@ export default class SnakeEngine implements UiStat<HTMLParagraphElement> {
     }, []));
   }
 
+  /**
+   * Initializes game state.
+   *
+   * Called from constructor to ensure engine is always in a valid state; only needs to be called externally to reinitialize for a new game.
+   */
   public initGame() {
     this._snake = Snake.fromPreferences(this.config, this.playfieldRect);
 
@@ -111,6 +131,8 @@ export default class SnakeEngine implements UiStat<HTMLParagraphElement> {
     const t = this.getValidSpawnLocations();
     this.initPointObjectArray(this.config.pelletConfig, this.pellets, t);
     this.initPointObjectArray(this.config.obstacleConfig, this.obstacles, t);
+
+    if (this.inputHandler instanceof QueuedInputHandler) this.inputHandler.clearInputQueue();
   }
 
   // #region Game State Management
@@ -151,24 +173,25 @@ export default class SnakeEngine implements UiStat<HTMLParagraphElement> {
   private endGame(reason?: "won" | "other" | Point[] | Point) {
     this.engineDriver.stopDriving();
     this._isGameOver = true;
+    if (this.inputHandler instanceof QueuedInputHandler) this.inputHandler.clearInputQueue();
     if (!reason) return;
-    let args: GameOverEvent | GameLostEvent = { engine: this, reason: typeof reason === "string" ? reason : "lost" };
+    let args: GameOverEvent | GameLostEvent = { engine: this, reason: typeof reason === "string" ? reason : "lost", totalEaten: this._pelletsEaten };
     switch (reason) {
-    case "other":
-      break;
+      case "other":
+        break;
 
-    case "won":
-      this._isGameWon = true;
-      this.onGameWon.fire(args);
-      break;
+      case "won":
+        this._isGameWon = true;
+        this.onGameWon.fire(args);
+        break;
 
-    default:
-      args = {
-        ...args,
-        collision: reason,
-      };
-      this.onGameLost.fire(args);
-      break;
+      default:
+        args = {
+          ...args,
+          collision: reason,
+        };
+        this.onGameLost.fire(args);
+        break;
     }
     this.onGameOver.fire(args);
   }
@@ -200,10 +223,17 @@ export default class SnakeEngine implements UiStat<HTMLParagraphElement> {
     const args: TickEvent = { engine: this, tickCount: ++this._tickCount, inGameTime: this.inGameTime, timeOverall: this.currentOverallTime };
     this.onTickStarted.fire(args);
     // 1. Inputs
-    const keys = this.inputHandler.getKeysDown();
-    this.inputHandler.resetState();
-    // TODO: Prioritize current direction?
-    let d = Point.included(this.snake.headDirection, keys.map(e => e.direction)) ? this.snake.headDirection : (keys[0]?.direction || this.snake.headDirection);
+    let d: Direction;
+    if (this.inputHandler instanceof QueuedInputHandler) {
+      const queuedDirection = this.inputHandler.dequeueNextValidDirection(this.snake.headDirection);
+      this.inputHandler.resetState();
+      d = queuedDirection || this.snake.headDirection;
+    } else {
+      const keys = this.inputHandler.getKeysDown();
+      this.inputHandler.resetState();
+      // TODO: Prioritize current direction?
+      d = Point.included(this.snake.headDirection, keys.map(e => e.direction)) ? this.snake.headDirection : (keys[0]?.direction || this.snake.headDirection);
+    }
     if (Point.equals(this.snake.headDirection, d.opposite)) {
       SnakeEngine.debugLevel.print(DebugLevel.WARN, "Ignoring 180 degree turn");
       d = this.snake.headDirection;
@@ -257,19 +287,21 @@ export default class SnakeEngine implements UiStat<HTMLParagraphElement> {
     const elements = bindMappedElementsToEvent(
       this.onTickCompleted,
       e => ({
-        tickCount:   html<HTMLParagraphElement>`<p>Turns Completed: ${e.tickCount}</b></p>`,
-        inGameTime:  html<HTMLParagraphElement>`<p>In Game Time: ${e.inGameTime}</b></p>`,
-        timeOverall: html<HTMLParagraphElement>`<p>Overall Time: ${e.timeOverall}</b></p>`,
+        tickCount:   html`<span><span>Turn</span> <b>${e.tickCount}</b></span>` as HTMLSpanElement,
+        snakeLength: html`<span><span>Score</span><b>${e.engine._pelletsEaten}</b></span>` as HTMLSpanElement,
+        // inGameTime:  html`<span><span>In Game Time</span> <b>${e.inGameTime}</b></span>` as HTMLSpanElement,
+        // timeOverall: html`<span><span>Overall Time</span> <b>${e.timeOverall}</b></span>` as HTMLSpanElement,
       }),
       initTickArgs,
     );
     return html`
-    <p id="engine-stats">
-      ${elements.tickCount}
-      ${elements.inGameTime}
-      ${elements.timeOverall}
-    </p>
-    ` as HTMLParagraphElement;
+    <div id="engine-stats">
+      ${elements.tickCount || ""}
+      ${elements.snakeLength || ""}
+      ${elements.inGameTime || ""}
+      ${elements.timeOverall || ""}
+    </div>
+    ` as HTMLDivElement;
   }
 }
 

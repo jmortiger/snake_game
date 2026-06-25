@@ -69,6 +69,7 @@ class EngineConfig implements IEngineConfig {
     public pelletConfig: IGridObjectConfig,
     public obstacleConfig: IGridObjectConfig,
     public millisecondsPerUpdate: number,
+    // TODO: Add config
     public wallBehavior: WallBehavior,
     public startingLength: number,
     public startingDirection?: Direction,

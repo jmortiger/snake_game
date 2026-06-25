@@ -1,5 +1,13 @@
 import type { SnakeEvent } from "./Events";
 
+// type JsonPrimitive = number | string | boolean | Date | null;
+// type JsonValue = JsonPrimitive | JsonObject | Array<JsonValue>;
+// type JsonObject = {
+//   [k: string]: JsonValue;
+// };
+// type JsonObjectOptional = {
+//   [k: string]: JsonValue | undefined;
+// };
 export default interface UiStat<T extends HTMLElement> {
   renderStats(): T | T[];
 }
@@ -12,6 +20,13 @@ function _shell<EventArgs, T extends HTMLElement>(gen: (args: EventArgs) => T, i
   };
 }
 
+/**
+ * Automates rerendering the given HTML when the given event triggers.
+ * @param event The event that triggers rerendering
+ * @param generator The function that renders the HTML
+ * @param initialValue The initial HTML or the initial values to use to generate the initial HTML
+ * @returns The initial HTML
+ */
 function bindToEvent<EventArgs, T extends HTMLElement>(event: SnakeEvent<EventArgs>, generator: (args: EventArgs) => T, initialValue: EventArgs | T) {
   const e = initialValue instanceof HTMLElement ? initialValue : generator(initialValue);
   event.add(_shell(generator, e));
