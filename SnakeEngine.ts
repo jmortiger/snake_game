@@ -175,23 +175,23 @@ export default class SnakeEngine implements UiStat<HTMLDivElement> {
     this._isGameOver = true;
     if (this.inputHandler instanceof QueuedInputHandler) this.inputHandler.clearInputQueue();
     if (!reason) return;
-    let args: GameOverEvent | GameLostEvent = { engine: this, reason: typeof reason === "string" ? reason : "lost" };
+    let args: GameOverEvent | GameLostEvent = { engine: this, reason: typeof reason === "string" ? reason : "lost", totalEaten: this._pelletsEaten };
     switch (reason) {
-    case "other":
-      break;
+      case "other":
+        break;
 
-    case "won":
-      this._isGameWon = true;
-      this.onGameWon.fire(args);
-      break;
+      case "won":
+        this._isGameWon = true;
+        this.onGameWon.fire(args);
+        break;
 
-    default:
-      args = {
-        ...args,
-        collision: reason,
-      };
-      this.onGameLost.fire(args);
-      break;
+      default:
+        args = {
+          ...args,
+          collision: reason,
+        };
+        this.onGameLost.fire(args);
+        break;
     }
     this.onGameOver.fire(args);
   }

@@ -22,7 +22,7 @@ export default defineConfig([
           typeof: false,
         },
       }],
-      "@stylistic/indent":                      ["warn", 2, { VariableDeclarator: "first" }],
+      "@stylistic/indent":                      ["warn", 2, { VariableDeclarator: "first", SwitchCase: 1 }],
       "@stylistic/space-before-function-paren": ["warn", "never"],
       "@stylistic/key-spacing":                 ["warn", { align: "value" }],
       // "@stylistic/key-spacing"                : ["warn", { align: "colon" }],

@@ -17,7 +17,7 @@
     "typescript": "^5"
   },
   "scripts": {
-    "build": "bun build --target 'browser' --outdir './dist/' ./index.ts && cpx 'assets/**/*' 'dist/assets/' && cpx 'index.html' 'dist/'",
+    "build": "bun build --target 'browser' --outdir './dist/' ./index.ts && bun build --target 'browser' --outdir './dist/' ./april_fools.ts && cpx 'assets/**/*' 'dist/assets/' && cpx '**.html' 'dist/' && cpx '**.css' 'dist/' && cpx 'e621_files/**' 'dist/e621_files/'",
     "build:clean": "bun x rimraf dist && npm run build"
   }
 }

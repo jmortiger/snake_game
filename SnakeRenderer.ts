@@ -236,13 +236,13 @@ class SnakeRenderer {
           const tileType = this.getTileType(i, j);
 
           switch (tileType) {
-          case "border":
-          case "corner":
-            backgroundDrawn = this.drawRotatedTile(tileType, offsetWidth, offsetHeight, this.getRotationAngle(i, j, tileType));
-            break;
-          default: // case "tile":
-            backgroundDrawn = SnakeImage.tryDrawImage(this.ctx, "bgTile", offsetWidth, offsetHeight, { x: this.renderedCellWidth, y: this.renderedCellWidth });
-            break;
+            case "border":
+            case "corner":
+              backgroundDrawn = this.drawRotatedTile(tileType, offsetWidth, offsetHeight, this.getRotationAngle(i, j, tileType));
+              break;
+            default: // case "tile":
+              backgroundDrawn = SnakeImage.tryDrawImage(this.ctx, "bgTile", offsetWidth, offsetHeight, { x: this.renderedCellWidth, y: this.renderedCellWidth });
+              break;
           }
         } else {
           backgroundDrawn = SnakeImage.tryDrawImage(this.ctx, "bgTile", offsetWidth, offsetHeight, { x: this.renderedCellWidth, y: this.renderedCellWidth });

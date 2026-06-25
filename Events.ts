@@ -59,7 +59,8 @@ interface TickEvent extends GameStateEvent {
   timeOverall: number;
 }
 interface GameOverEvent extends GameStateEvent {
-  reason: "lost" | "won" | "other";
+  reason:     "lost" | "won" | "other";
+  totalEaten: number;
 }
 interface GameLostEvent extends GameOverEvent {
   collision: Point[] | Point;

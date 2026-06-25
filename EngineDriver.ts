@@ -6,9 +6,7 @@ export default class EngineDriver {
   private timerId?: number;
   private _isDriving = true;
   public get isDriving() { return this._isDriving; }
-  constructor(private readonly engine: SnakeEngine) {
-
-  }
+  constructor(private readonly engine: SnakeEngine) {}
 
   public startDriving() {
     if (this.isDriving && this.timerId) return false;

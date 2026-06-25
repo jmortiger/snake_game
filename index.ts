@@ -1,4 +1,3 @@
-import type SnakeEngine from "./SnakeEngine";
 import SnakeRenderer from "./SnakeRenderer";
 import { EngineConfig, type IEngineConfig } from "./Types";
 
